@@ -18,7 +18,7 @@ class DIALOGUEPLUGIN_API FDialogueParser
 	FDialogueParserContext* Context;
 
 public:
-	FDialogueParser() : State(&FParserState::SentenceState), Context(nullptr)
+	FDialogueParser() : State(&FParserState::Dispatcher), Context(nullptr)
 	{
 		FParserState::ResetIDCounter();
 	}

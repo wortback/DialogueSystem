@@ -39,7 +39,14 @@ bool FDialogueParser::ReadFile(const FString& FilePath)
 			// Skip empty lines or comments
 			if (Line.IsEmpty() || Line.StartsWith(TEXT("#"))) continue;
 
+			DLOG(Log, "Parsing line: %s", *Line);
+			DLOG(Warning, "Indentation level: %d", Context->IndentationLevel);
 			State = State->ProcessLine(Line, *Context);
+			if (!State || State == &FParserState::Error)
+			{
+				DLOG(Error, "Parsing was aborted due to an error.");
+				return false;
+			}
 		}
 		Context->AssetBeingBuilt->DialogueName = FName(*FPaths::GetBaseFilename(FilePath));
 		return true;

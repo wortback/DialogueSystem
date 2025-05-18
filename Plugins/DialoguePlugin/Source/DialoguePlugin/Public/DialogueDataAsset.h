@@ -76,20 +76,28 @@ struct FFlagEffect
 
 #pragma region DialogueNodes
 UCLASS(Abstract)
-class UDialogueNode : public UObject
+class UDialogueNodeBase : public UObject
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FName ID;
+};
+
+UCLASS(Abstract)
+class UDialogueNodeChained : public UDialogueNodeBase
+{
+	GENERATED_BODY()
 
 public:
-	FName GetID() const { return ID; }
+	/** ID of the next node to jump to */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	FName NextID;
 };
 
 UCLASS(Blueprintable)
-class UDialogueSentence : public UDialogueNode
+class UDialogueSentence : public UDialogueNodeChained
 {
 	GENERATED_BODY()
 
@@ -101,10 +109,6 @@ public:
 	/** What the speaker is currently saying */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FString Text;
-
-	/** ID of the next node to jump to */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	FName NextID;
 };
 
 /**
@@ -112,13 +116,13 @@ public:
  * If RequiredFlagState is satisfied, this branch is chosen and FirstID is used to enter its Content map.
  */
 UCLASS(Blueprintable)
-class UDialogueBranch : public UDialogueNode
+class UDialogueBranch : public UDialogueNodeBase
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	TMap<FName, UDialogueNode*> Content;
+	TMap<FName, UDialogueNodeBase*> Content;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	TArray<FFlagCondition> RequiredFlagState;
@@ -134,30 +138,42 @@ public:
 	int32 Priority = 0;
 };
 
+USTRUCT(BlueprintType)
+struct FDialogueChoiceOption
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Choice Option")
+	FString Text;
+
+	/** Flags that will change state after this response is selected */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Choice Option")
+	TArray<FFlagEffect> AffectedFlags;
+
+	/** Required conditions for this response to be available */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Choice Option")
+	TArray<FFlagCondition> Conditions;
+
+	/** opt. Jumps to the ID is this choice is selected */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Choice Option")
+	FName GotoID;
+
+	/** Used to hide this option from the player until conditions are met */
+	bool bIsHidden = false;
+};
+
 UCLASS(Blueprintable)
-class UDialogueChoice : public UDialogueNode
+class UDialogueChoice : public UDialogueNodeChained
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	FString Text;
-
-	/** Flags that will change state after this response is selected */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	TArray<FFlagEffect> AffectedFlags;
-
-	/** Required conditions for this response to be available */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	TArray<FFlagCondition> Conditions;
-
-	/** Jumps to the ID is this choice is selected */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	FName GotoID;
+	TArray<FDialogueChoiceOption> Options;
 };
 
 UCLASS(Blueprintable)
-class UDialogueFork : public UDialogueNode
+class UDialogueFork : public UDialogueNodeChained
 {
 	GENERATED_BODY()
 
@@ -179,6 +195,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FName DialogueName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TMap<FName, TObjectPtr<UDialogueNode>> DialogueMap;
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly)
+	TMap<FName, TObjectPtr<UDialogueNodeBase>> DialogueMap;
 };

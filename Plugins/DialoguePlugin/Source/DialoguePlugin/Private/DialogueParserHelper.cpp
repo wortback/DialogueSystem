@@ -7,7 +7,7 @@
 
 void UDialogueParserHelper::RunParser(UDialogueDataAsset* Asset)
 {
-    FString Path = FPaths::ProjectDir() / TEXT("DialogueSentenceOnly.txt");
+    FString Path = FPaths::ProjectDir() / TEXT("DialogueChoices.dgl");
 
     //UDialogueDataAsset* NewAsset = NewObject<UDialogueDataAsset>(GetTransientPackage(), NAME_None, RF_Standalone);
 

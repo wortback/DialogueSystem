@@ -8,6 +8,10 @@
 class FSentenceState;
 class FChoiceState;
 class FBranchState;
+class FChoiceTextState;
+class FMetaState;
+class FErrorState;
+class FDispatcherState;
 
 /**
  * 
@@ -18,9 +22,16 @@ public:
 	static FSentenceState SentenceState;
 	static FChoiceState ChoiceState;
 	static FBranchState BranchState;
+	static FChoiceTextState ChoiceTextState;
+	static FMetaState MetaState;
+
+	static FErrorState Error;
+	static FDispatcherState Dispatcher;
 
 	/** ID counter for node IDs within the same dialogue data asset */
 	static int32 IDCounter;
+
+public:
 
 	virtual ~FParserState() {};
 
@@ -37,6 +48,26 @@ public:
 	}
 };
 
+//////////////////////////////////////////////////////////////////////////
+// Meta States
+//////////////////////////////////////////////////////////////////////////
+
+class FErrorState final : public FParserState
+{
+public:
+	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
+};
+
+class FDispatcherState final : public FParserState
+{
+public:
+	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
+};
+
+
+//////////////////////////////////////////////////////////////////////////
+// FParserState derived classes
+//////////////////////////////////////////////////////////////////////////
 
 class FSentenceState final : public FParserState
 {
@@ -52,8 +83,21 @@ public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
 };
 
+class FChoiceTextState final : public FParserState
+{
+public:
+	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
+};
+
 class FBranchState final : public FParserState
 {
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
 };
+
+class FMetaState final : public FParserState
+{
+public:
+	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
+};
+

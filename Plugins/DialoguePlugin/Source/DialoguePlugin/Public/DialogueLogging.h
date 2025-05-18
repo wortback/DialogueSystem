@@ -20,7 +20,14 @@ MONOLITHIC_HEADER_BOILERPLATE()
  *****************************************************************************/
 
 DECLARE_LOG_CATEGORY_EXTERN(DialogueParsing, Log, All);
-DEFINE_LOG_CATEGORY(DialogueParsing);
+
 
 #define DLOG(Verbosity, Format, ...) \
 	UE_LOG(DialogueParsing, Verbosity, TEXT(Format), ##__VA_ARGS__)
+
+#define PARSER_ERROR(Line) \
+	UE_LOG(DialogueParsing, Error, TEXT("Failed to process the line: %s"), *Line)
+
+# define PARSER_ERROR_INDENTATION(Line, ContextIndentationLevel, LineIndentationLevel) \
+	UE_LOG(DialogueParsing, Error, TEXT("Failed to process the line: %s"), *Line) \
+	UE_LOG(DialogueParsing, Error, TEXT("Indentation level mismatch! Expected %d, got %d"), ContextIndentationLevel, LineIndentationLevel);
