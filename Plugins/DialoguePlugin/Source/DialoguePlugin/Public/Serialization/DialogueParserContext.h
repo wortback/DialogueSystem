@@ -24,6 +24,9 @@ public:
 	UDialogueDataAsset* AssetBeingBuilt = nullptr;
 
 	///// PARSER CONTEXT DATA
+	
+	/** ID counter for node IDs within the same dialogue data asset */
+	int32 IDCounter;
 
 	/** Previous dialogue node that has been processed */
 	TObjectPtr<UDialogueNodeBase> PrevNode = nullptr;

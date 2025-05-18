@@ -17,8 +17,6 @@ FMetaState FParserState::MetaState;
 FErrorState FParserState::Error;
 FDispatcherState FParserState::Dispatcher;
 
-int32 FParserState::IDCounter = 0;
-
 
 
 #pragma region FSentenceState
@@ -44,7 +42,7 @@ FParserState* FSentenceState::ProcessLine(const FString& Line, FDialogueParserCo
 		Context.PrevNode = Context.CurrentNode;
 		Context.CurrentNode = nullptr;
 
-		FName ID = GenerateID();
+		FName ID = GenerateID(Context);
 		UDialogueSentence* Sentence = Context.AddNode<UDialogueSentence>(ID, FString("SentenceNode"));
 		Sentence->ID = ID;
 		Sentence->Speaker = Speaker.TrimStartAndEnd();
@@ -68,7 +66,12 @@ FParserState* FSentenceState::ProcessLine(const FString& Line, FDialogueParserCo
 
 bool FSentenceState::ParseSentence(const FString& Line, FString& Speaker, FString& Text)
 {
-	Line.Split(":", &Speaker, &Text);
+	if (!Line.Split(":", &Speaker, &Text, ESearchCase::IgnoreCase))
+	{
+		DLOG(Error, "Missing ':' in sentence line: %s", *Line);
+		return false;
+	}
+
 	const FString TextTrimmed = Text.TrimStartAndEnd();
 	if (!TextTrimmed.StartsWith(TEXT("\"")) || !TextTrimmed.EndsWith(TEXT("\"")))
 	{
@@ -93,7 +96,7 @@ FParserState* FChoiceState::ProcessLine(const FString& Line, FDialogueParserCont
 		&& GetIndentLevel(Line) == Context.IndentationLevel)
 	{
 		// Create a new choice node
-		FName ID = GenerateID();
+		FName ID = GenerateID(Context);
 		UDialogueChoice* Choice = Context.AddNode<UDialogueChoice>(ID, FString("ChoiceNode"));
 
 		// Create a struct for this choice option and add it to the node

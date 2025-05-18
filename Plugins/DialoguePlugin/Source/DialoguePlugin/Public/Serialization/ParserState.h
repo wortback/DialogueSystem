@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Serialization/DialogueParserContext.h"
 
 
 class FSentenceState;
@@ -28,23 +29,20 @@ public:
 	static FErrorState Error;
 	static FDispatcherState Dispatcher;
 
-	/** ID counter for node IDs within the same dialogue data asset */
-	static int32 IDCounter;
-
 public:
 
 	virtual ~FParserState() {};
 
 	virtual FParserState* ProcessLine(const FString& Line, class FDialogueParserContext& Context) = 0;
 
-	static FName GenerateID()
+	static FName GenerateID(FDialogueParserContext& Context)
 	{
-		return FName(*FString::Printf(TEXT("ID_%d"), ++IDCounter));
+		return FName(*FString::Printf(TEXT("ID_%d"), ++Context.IDCounter));
 	}
 
-	static void ResetIDCounter()
+	static void ResetIDCounter(FDialogueParserContext& Context)
 	{
-		IDCounter = 0;
+		Context.IDCounter = 0;
 	}
 };
 
