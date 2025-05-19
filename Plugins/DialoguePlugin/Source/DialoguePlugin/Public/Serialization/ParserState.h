@@ -15,7 +15,7 @@ class FErrorState;
 class FDispatcherState;
 
 /**
- * 
+ *
  */
 class DIALOGUEPLUGIN_API FParserState
 {
@@ -33,7 +33,7 @@ public:
 
 	virtual ~FParserState() {};
 
-	virtual FParserState* ProcessLine(const FString& Line, class FDialogueParserContext& Context) = 0;
+	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) = 0;
 
 	static FName GenerateID(FDialogueParserContext& Context)
 	{
@@ -43,6 +43,15 @@ public:
 	static void ResetIDCounter(FDialogueParserContext& Context)
 	{
 		Context.IDCounter = 0;
+	}
+
+	void ResetIndentationAfterChoice(FDialogueParserContext& Context)
+	{
+		// If it's the first sentence after a choice, we need to reduce the indentation level
+		if (Context.CurrentNode && Context.CurrentNode->IsA(UDialogueChoice::StaticClass()))
+		{
+			Context.IndentationLevel--;
+		}
 	}
 };
 
@@ -72,7 +81,12 @@ class FSentenceState final : public FParserState
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
 
+private:
 	bool ParseSentence(const FString& Line, FString& Speaker, FString& Text);
+
+	FParserState* ProcessBlockLine(const FString& Line, FDialogueParserContext& Context);
+
+	FParserState* ProcessNoIndentLine(const FString& Line, FDialogueParserContext& Context);
 };
 
 class FChoiceState final : public FParserState
@@ -91,6 +105,9 @@ class FBranchState final : public FParserState
 {
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
+
+private:
+	bool ParseBranchName(const FString& Line, FString& BranchName);
 };
 
 class FMetaState final : public FParserState

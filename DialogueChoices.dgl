@@ -1,9 +1,12 @@
-Yuu: "Oh, Ash, please. There's no need for you to act this way."
-[choice ]
-	Please believe me. I know it sounds fishy, but that's how it is.
+Yuu: "Dummy sentence1"
 [choice]
-	Do you always skip introducations and jump straight to the interrogation part? 
+	Choice1
 [choice]
-	make a choice
-Yuu: "Oh, Ash, please. There's no need for you to act this way."
-Yuu: "Oh, Ash, please. I have no choice."
+	Choice2
+[choice]
+	Choice3
+Yuu: "Dummy sentence2"
+Yuu: "Dummy sentence3"
+[branch ]
+	Yuu: "Dummy branch sentence1"
+	Yuu: "Dummy branch sentence2"

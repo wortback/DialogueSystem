@@ -48,6 +48,14 @@ bool FDialogueParser::ReadFile(const FString& FilePath)
 				return false;
 			}
 		}
+		// Check if there's a branch node hanging in the memory and not added to the asset
+		// It means that the file has ended wih the branch node
+		if (Context->BranchNode)
+		{
+			DLOG(Warning, "The file ended with a branch node. Adding it to the asset.");
+			Context->AssetBeingBuilt->DialogueMap.Add(Context->BranchNode->ID, Context->BranchNode);
+		}
+
 		Context->AssetBeingBuilt->DialogueName = FName(*FPaths::GetBaseFilename(FilePath));
 		return true;
 	}
@@ -64,7 +72,7 @@ void FDialogueParser::LogParseResult(const UDialogueDataAsset& OutAsset)
 	{
 		if (const auto* Sentence = Cast<UDialogueSentence>(Pair.Value))
 		{
-			DLOG(Log, "[%s] %s: %s",*Pair.Key.ToString(), *Sentence->Speaker, *Sentence->Text);
+			DLOG(Log, "[%s] %s: %s", *Pair.Key.ToString(), *Sentence->Speaker, *Sentence->Text);
 		}
 	}
 }

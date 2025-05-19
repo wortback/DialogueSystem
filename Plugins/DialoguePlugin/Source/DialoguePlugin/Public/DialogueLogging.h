@@ -31,3 +31,4 @@ DECLARE_LOG_CATEGORY_EXTERN(DialogueParsing, Log, All);
 # define PARSER_ERROR_INDENTATION(Line, ContextIndentationLevel, LineIndentationLevel) \
 	UE_LOG(DialogueParsing, Error, TEXT("Failed to process the line: %s"), *Line) \
 	UE_LOG(DialogueParsing, Error, TEXT("Indentation level mismatch! Expected %d, got %d"), ContextIndentationLevel, LineIndentationLevel);
+

@@ -25,43 +25,42 @@ FParserState* FSentenceState::ProcessLine(const FString& Line, FDialogueParserCo
 	DLOG(Log, "Parsing a sentence...");
 
 	// If it's the first sentence after a choice or branch, we need to reduce the indentation level
-	if (Context.CurrentNode &&
-		(Context.CurrentNode->IsA(UDialogueChoice::StaticClass())
-			|| Context.CurrentNode->IsA(UDialogueBranch::StaticClass())))
+	ResetIndentationAfterChoice(Context);
+
+	if (!Context.BranchNode)
 	{
-		Context.IndentationLevel--;
-	}
-
-	if (GetIndentLevel(Line) == Context.IndentationLevel)
-	{
-		// Parse the line into speaker and text and create a sentence node
-		FString Speaker, Text;
-		if (!ParseSentence(Line, Speaker, Text)) return &FParserState::SentenceState;
-
-		// Set previous node and zero the current one
-		Context.PrevNode = Context.CurrentNode;
-		Context.CurrentNode = nullptr;
-
-		FName ID = GenerateID(Context);
-		UDialogueSentence* Sentence = Context.AddNode<UDialogueSentence>(ID, FString("SentenceNode"));
-		Sentence->ID = ID;
-		Sentence->Speaker = Speaker.TrimStartAndEnd();
-		Sentence->Text = Text.TrimStartAndEnd().Replace(TEXT("\""), TEXT(""));
-
-		// check if there's a previous node is a chain node and set its NextID to this one
-		if (Context.PrevNode && Context.PrevNode->IsA(UDialogueNodeChained::StaticClass()))
+		if (GetIndentLevel(Line) == Context.IndentationLevel)
 		{
-			UDialogueNodeChained* PrevSentence = Cast<UDialogueNodeChained>(Context.PrevNode);
-			PrevSentence->NextID = ID;
+			return ProcessNoIndentLine(Line, Context);
 		}
 
-		Context.CurrentNode = Sentence;
-		return &FParserState::Dispatcher;
+		// If we can't parse the line, return error
+		PARSER_ERROR_INDENTATION(Line, Context.IndentationLevel, GetIndentLevel(Line));
+		return &FParserState::Error;
 	}
 
-	// If we can't parse the line, return error
-	PARSER_ERROR_INDENTATION(Line, Context.IndentationLevel, GetIndentLevel(Line));
-	return &FParserState::Error;
+	// If we are in a branch, we need to check if the indentation level is correct
+	if (GetIndentLevel(Line) == Context.IndentationLevel)
+	{
+		return ProcessBlockLine(Line, Context);
+	}
+
+	// If the indentation is bigger, it means there's an indentation error
+	if (GetIndentLevel(Line) > Context.IndentationLevel)
+	{
+		// If we can't parse the line, return error
+		PARSER_ERROR_INDENTATION(Line, Context.IndentationLevel, GetIndentLevel(Line));
+		return &FParserState::Error;
+	}
+
+	// Is the indentation level is smaller, it means, we are out of the branch
+	Context.IndentationLevel--;
+
+	DLOG(Log, "Completed parsing the branch node.");
+	Context.CurrentNode = Context.BranchNode;
+	Context.BranchNode = nullptr;
+
+	return ProcessNoIndentLine(Line, Context);
 }
 
 bool FSentenceState::ParseSentence(const FString& Line, FString& Speaker, FString& Text)
@@ -83,6 +82,52 @@ bool FSentenceState::ParseSentence(const FString& Line, FString& Speaker, FStrin
 	return true;
 }
 
+FParserState* FSentenceState::ProcessBlockLine(const FString& Line, FDialogueParserContext& Context)
+{
+	// Parse the line into speaker and text and create a sentence node
+	FString Speaker, Text;
+	if (!ParseSentence(Line, Speaker, Text)) return &FParserState::SentenceState;
+
+	// Set previous node and zero the current one
+	Context.PrevNode = Context.CurrentNode;
+	Context.CurrentNode = nullptr;
+
+	FName ID = GenerateID(Context);
+	UDialogueSentence* Sentence = Context.AddNodeBranch<UDialogueSentence>(ID, FString("SentenceNode"));
+	Sentence->ID = ID;
+	Sentence->Speaker = Speaker.TrimStartAndEnd();
+	Sentence->Text = Text.TrimStartAndEnd().Replace(TEXT("\""), TEXT(""));
+
+	// check if there's a previous node is a chain node and set its NextID to this one
+	Context.TryLinkNodes(ID);
+
+	Context.CurrentNode = Sentence;
+	return &FParserState::Dispatcher;
+}
+
+FParserState* FSentenceState::ProcessNoIndentLine(const FString& Line, FDialogueParserContext& Context)
+{
+	// Parse the line into speaker and text and create a sentence node
+	FString Speaker, Text;
+	if (!ParseSentence(Line, Speaker, Text)) return &FParserState::SentenceState;
+
+	// Set previous node and zero the current one
+	Context.PrevNode = Context.CurrentNode;
+	Context.CurrentNode = nullptr;
+
+	FName ID = GenerateID(Context);
+	UDialogueSentence* Sentence = Context.AddNode<UDialogueSentence>(ID, FString("SentenceNode"));
+	Sentence->ID = ID;
+	Sentence->Speaker = Speaker.TrimStartAndEnd();
+	Sentence->Text = Text.TrimStartAndEnd().Replace(TEXT("\""), TEXT(""));
+
+	// check if there's a previous node is a chain node and set its NextID to this one
+	Context.TryLinkNodes(ID);
+
+	Context.CurrentNode = Sentence;
+	return &FParserState::Dispatcher;
+}
+
 #pragma endregion
 
 #pragma region FChoiceState
@@ -98,6 +143,7 @@ FParserState* FChoiceState::ProcessLine(const FString& Line, FDialogueParserCont
 		// Create a new choice node
 		FName ID = GenerateID(Context);
 		UDialogueChoice* Choice = Context.AddNode<UDialogueChoice>(ID, FString("ChoiceNode"));
+		Choice->ID = ID;
 
 		// Create a struct for this choice option and add it to the node
 		DLOG(Log, "Creating a new choice option...");
@@ -107,6 +153,8 @@ FParserState* FChoiceState::ProcessLine(const FString& Line, FDialogueParserCont
 		// Update Prev and Current in the context
 		Context.PrevNode = Context.CurrentNode;
 		Context.CurrentNode = Choice;
+
+		Context.TryLinkNodes(ID);
 
 		// Increase the indentation level <- we are now in the choice option block
 		Context.IndentationLevel++;
@@ -173,9 +221,69 @@ FParserState* FBranchState::ProcessLine(const FString& Line, FDialogueParserCont
 {
 	DLOG(Log, "Parsing a branch...");
 
-	DLOG(Warning, "BranchParsing State is not implemented.");
+	// If we enter a branch after a choice or branch, we need to decrement the indentation level
+	ResetIndentationAfterChoice(Context);
+
+	// Prohibit branch inside a branch
+	if (Context.BranchNode)
+	{
+		DLOG(Error, "Nested branches are not supported! Please split it into two separate branches.")
+			return &FParserState::Error;
+	}
+
+	if (GetIndentLevel(Line) == Context.IndentationLevel)
+	{
+		// Create a new branch node
+		// Branches' IDs are uniques and are set to the branch name
+		FString BranchName;
+		if (!ParseBranchName(Line, BranchName)) return &FParserState::Error;
+
+		FName ID = FName(BranchName);
+		UDialogueBranch* Branch = Context.AddNode<UDialogueBranch>(ID, FString("BranchNode"));
+		Branch->ID = ID;
+
+		Context.PrevNode = Context.CurrentNode;
+		// check if there's a previous node is a chain node and set its NextID to this one
+		Context.TryLinkNodes(ID);
+
+		// Update Prev and Current in the context
+		Context.CurrentNode = nullptr;
+		Context.BranchNode = Branch;
+
+		// Increase the indentation level <- we are now in the choice option block
+		Context.IndentationLevel++;
+
+		return &FParserState::Dispatcher;
+	}
+
 	return &FParserState::Error;
 }
+
+bool FBranchState::ParseBranchName(const FString& Line, FString& BranchName)
+{
+
+	if (!Line.Split(" ", nullptr, &BranchName, ESearchCase::IgnoreCase))
+	{
+		DLOG(Error, "Missing a space between the branch name and the keyword in %s", *Line);
+		return false;
+	}
+
+	BranchName = BranchName.TrimStartAndEnd();
+	if (!BranchName.EndsWith(TEXT("]")))
+	{
+		DLOG(Error, "] is missing after the branch name in: %s", *Line);
+		return false;
+	}
+	BranchName = BranchName.Replace(TEXT("]"), TEXT(""));
+	BranchName = BranchName.TrimStartAndEnd();
+	if (BranchName.IsEmpty())
+	{
+		DLOG(Error, "Branch name is empty in: %s", *Line);
+		return false;
+	}
+	return true;
+}
+
 #pragma endregion
 
 FParserState* FMetaState::ProcessLine(const FString& Line, FDialogueParserContext& Context)

@@ -121,7 +121,7 @@ class UDialogueBranch : public UDialogueNodeBase
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Dialogue")
 	TMap<FName, UDialogueNodeBase*> Content;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
@@ -130,12 +130,12 @@ public:
 	/** ID of the first node in the content map to jump to */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FName FirstID;
-
-	/** Higher priority branch is chosen if more than one branch's RequiredFlagState is satisfied
-	 * The higher is the value, the higher is the priority
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	int32 Priority = 0;
+// 
+// 	/** Higher priority branch is chosen if more than one branch's RequiredFlagState is satisfied
+// 	 * The higher is the value, the higher is the priority
+// 	 */
+// 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+// 	int32 Priority = 0;
 };
 
 USTRUCT(BlueprintType)
