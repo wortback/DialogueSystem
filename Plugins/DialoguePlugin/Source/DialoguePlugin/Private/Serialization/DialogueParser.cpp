@@ -34,6 +34,7 @@ bool FDialogueParser::ReadFile(const FString& FilePath)
 {
 	if (FFileHelper::LoadFileToStringArray(FileLines, *FilePath))
 	{
+		int32 Counter = 0;
 		for (const FString& Line : FileLines)
 		{
 			// Skip empty lines or comments
@@ -45,8 +46,12 @@ bool FDialogueParser::ReadFile(const FString& FilePath)
 			if (!State || State == &FParserState::Error)
 			{
 				DLOG(Error, "Parsing was aborted due to an error.");
+				DLOG(Error, "Line number: %d", Counter);
+				DLOG(Error, "Line content: %s", *Line);
 				return false;
 			}
+
+			Counter++;
 		}
 		// Check if there's a branch node hanging in the memory and not added to the asset
 		// It means that the file has ended wih the branch node

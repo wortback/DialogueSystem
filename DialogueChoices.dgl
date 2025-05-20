@@ -1,12 +1,9 @@
 Yuu: "Dummy sentence1"
 [choice]
-	Choice1
+	Option1
+	[branch new]
+		Yuu: "Bad sentence."
 [choice]
-	Choice2
-[choice]
-	Choice3
+	Option2
 Yuu: "Dummy sentence2"
-Yuu: "Dummy sentence3"
-[branch ]
-	Yuu: "Dummy branch sentence1"
-	Yuu: "Dummy branch sentence2"
+

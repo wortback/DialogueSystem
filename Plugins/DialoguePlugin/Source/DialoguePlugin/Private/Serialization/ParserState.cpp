@@ -13,6 +13,7 @@ FSentenceState FParserState::SentenceState;
 FChoiceState FParserState::ChoiceState;
 FBranchState FParserState::BranchState;
 FChoiceTextState FParserState::ChoiceTextState;
+FChoiceMetaState FParserState::ChoiceMetaState;
 FMetaState FParserState::MetaState;
 FErrorState FParserState::Error;
 FDispatcherState FParserState::Dispatcher;
@@ -23,9 +24,6 @@ FDispatcherState FParserState::Dispatcher;
 FParserState* FSentenceState::ProcessLine(const FString& Line, FDialogueParserContext& Context)
 {
 	DLOG(Log, "Parsing a sentence...");
-
-	// If it's the first sentence after a choice or branch, we need to reduce the indentation level
-	ResetIndentationAfterChoice(Context);
 
 	if (!Context.BranchNode)
 	{
@@ -135,14 +133,26 @@ FParserState* FChoiceState::ProcessLine(const FString& Line, FDialogueParserCont
 {
 	DLOG(Log, "Parsing a choice...");
 
+	if (GetIndentLevel(Line) != Context.IndentationLevel)
+	{
+		PARSER_ERROR_INDENTATION(Line, Context.IndentationLevel, GetIndentLevel(Line));
+		return &FParserState::Error;
+	}
+
 	// If we are not in the choice node, create a new one
 	//  => In means it's the first [choice] keyword we encounter
-	if ((!Context.CurrentNode || !Context.CurrentNode->IsA(UDialogueChoice::StaticClass()))
-		&& GetIndentLevel(Line) == Context.IndentationLevel)
+	if (!Context.CurrentNode || !Context.CurrentNode->IsA(UDialogueChoice::StaticClass()))
 	{
 		// Create a new choice node
 		FName ID = GenerateID(Context);
-		UDialogueChoice* Choice = Context.AddNode<UDialogueChoice>(ID, FString("ChoiceNode"));
+
+		// Add the choice node to the branch if we are in one
+		UDialogueChoice* Choice;
+		if (Context.BranchNode)
+			Choice = Context.AddNodeBranch<UDialogueChoice>(ID, FString("ChoiceNode"));
+		
+		else
+			Choice = Context.AddNode<UDialogueChoice>(ID, FString("ChoiceNode"));
 		Choice->ID = ID;
 
 		// Create a struct for this choice option and add it to the node
@@ -163,33 +173,21 @@ FParserState* FChoiceState::ProcessLine(const FString& Line, FDialogueParserCont
 	}
 
 	// If we are already in a choice node, just add a new choice option
-
-	// reduce the indentation level since we are out of the prev choice option block
-	Context.IndentationLevel--;
-
-	if (GetIndentLevel(Line) == Context.IndentationLevel)
+	FDialogueChoiceOption NewOption;
+	UDialogueChoice* Choice = Cast<UDialogueChoice>(Context.CurrentNode);
+	if (!Choice)
 	{
-		FDialogueChoiceOption NewOption;
-		UDialogueChoice* Choice = Cast<UDialogueChoice>(Context.CurrentNode);
-		if (!Choice)
-		{
-			PARSER_ERROR(Line);
-			return &FParserState::Error;
-		}
-		DLOG(Log, "Creating a new choice option...");
-		Choice->Options.Add(NewOption);
-
-		// Increase the indentation level <- we are now in the choice option block
-		Context.IndentationLevel++;
-
-		return &FParserState::ChoiceTextState;
+		PARSER_ERROR(Line);
+		return &FParserState::Error;
 	}
+	DLOG(Log, "Creating a new choice option...");
+	Choice->Options.Add(NewOption);
 
+	// Increase the indentation level <- we are now in the choice option block
+	Context.IndentationLevel++;
 
-	PARSER_ERROR_INDENTATION(Line, Context.IndentationLevel, GetIndentLevel(Line));
-	return &FParserState::Error;
+	return &FParserState::ChoiceTextState;
 }
-
 
 FParserState* FChoiceTextState::ProcessLine(const FString& Line, FDialogueParserContext& Context)
 {
@@ -206,13 +204,30 @@ FParserState* FChoiceTextState::ProcessLine(const FString& Line, FDialogueParser
 
 		Choice->Options.Last().Text = Line.TrimStartAndEnd();
 		DLOG(Log, "Choice option text: %s", *Line.TrimStartAndEnd());
-		return &FParserState::Dispatcher;
+		return &FParserState::ChoiceMetaState;
 	}
 
 	PARSER_ERROR_INDENTATION(Line, Context.IndentationLevel, GetIndentLevel(Line));
 	return &FParserState::Error;
 }
 
+FParserState* FChoiceMetaState::ProcessLine(const FString& Line, FDialogueParserContext& Context)
+{
+	DLOG(Log, "Checking if there's any meta available for the choice option...");
+	if (CanParseMeta(Line))
+	{
+		DLOG(Log, "Parsing meta data for the choice option...");
+		// TODO: Implement meta parsing for choice options
+
+		// We return this state to check if there's any more metadata on the next line
+		return &FParserState::ChoiceMetaState;
+	}
+
+	DLOG(Log, "No meta data found for the choice option...");
+	// Means we are out of the choice option block
+	Context.IndentationLevel--;
+	return Dispatcher.ProcessLine(Line, Context);
+}
 
 #pragma endregion
 
@@ -220,9 +235,6 @@ FParserState* FChoiceTextState::ProcessLine(const FString& Line, FDialogueParser
 FParserState* FBranchState::ProcessLine(const FString& Line, FDialogueParserContext& Context)
 {
 	DLOG(Log, "Parsing a branch...");
-
-	// If we enter a branch after a choice or branch, we need to decrement the indentation level
-	ResetIndentationAfterChoice(Context);
 
 	// Prohibit branch inside a branch
 	if (Context.BranchNode)
@@ -308,8 +320,7 @@ FParserState* FDispatcherState::ProcessLine(const FString& Line, FDialogueParser
 		return ChoiceState.ProcessLine(Line, Context);
 	if (Line.Contains("[") && Line.Contains("]") && Line.Contains("branch"))
 		return BranchState.ProcessLine(Line, Context);
-	if (Line.Contains("[") && Line.Contains("]")
-		|| Line.Contains("condition") || Line.Contains("goto") || Line.Contains("set"))
+	if (CanParseMeta(Line))
 		return MetaState.ProcessLine(Line, Context);
 	if (Line.Contains(":"))
 		return SentenceState.ProcessLine(Line, Context);

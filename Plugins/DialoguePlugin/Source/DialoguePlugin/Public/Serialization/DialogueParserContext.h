@@ -8,6 +8,8 @@
 #include <DialogueLogging.h>
 
 
+class FParserState;
+
 enum class EContextState : uint8
 {
 	GlobalScope,     // Top-level dialogue lines
@@ -21,12 +23,14 @@ enum class EContextState : uint8
 class DIALOGUEPLUGIN_API FDialogueParserContext
 {
 public:
+	friend class FDialogueParser;
+
 	UDialogueDataAsset* AssetBeingBuilt = nullptr;
 
 	///// PARSER CONTEXT DATA
 
 	/** ID counter for node IDs within the same dialogue data asset */
-	int32 IDCounter;
+	int32 IDCounter = 0;
 
 	/** Previous dialogue node that has been processed */
 	TObjectPtr<UDialogueNodeBase> PrevNode = nullptr;
@@ -41,6 +45,9 @@ public:
 
 	/** Tracks the indentation level (i.e. num of tab characters before text) */
 	int32 IndentationLevel = 0;
+
+private:
+	FDialogueParserContext() {}
 
 public:
 	template<typename T>
