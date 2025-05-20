@@ -9,11 +9,13 @@
 class FSentenceState;
 class FChoiceState;
 class FBranchState;
+class FBranchDispatcherState;
 class FChoiceTextState;
 class FChoiceMetaState;
 class FMetaState;
 class FErrorState;
 class FDispatcherState;
+
 
 /**
  *
@@ -24,6 +26,7 @@ public:
 	static FSentenceState SentenceState;
 	static FChoiceState ChoiceState;
 	static FBranchState BranchState;
+	static FBranchDispatcherState BranchDispatcher;
 	static FChoiceTextState ChoiceTextState;
 	static FChoiceMetaState ChoiceMetaState;
 	static FMetaState MetaState;
@@ -66,6 +69,15 @@ public:
 
 class FDispatcherState final : public FParserState
 {
+	friend class FBranchDispatcherState;
+public:
+	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
+private:
+	FParserState* Dispatch(const FString& Line, FDialogueParserContext& Context);
+};
+
+class FBranchDispatcherState final : public FParserState
+{
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
 };
@@ -92,21 +104,12 @@ public:
 
 private:
 	bool ParseSentence(const FString& Line, FString& Speaker, FString& Text);
-
-	FParserState* ProcessBlockLine(const FString& Line, FDialogueParserContext& Context);
-
-	FParserState* ProcessNoIndentLine(const FString& Line, FDialogueParserContext& Context);
 };
 
 class FChoiceState final : public FParserState
 {
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
-
-private:
-	FParserState* ProcessBlockLine(const FString& Line, FDialogueParserContext& Context);
-
-	FParserState* ProcessNoIndentLine(const FString& Line, FDialogueParserContext& Context);
 };
 
 class FChoiceTextState final : public FParserState

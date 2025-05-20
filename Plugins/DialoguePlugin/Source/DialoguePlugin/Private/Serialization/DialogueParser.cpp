@@ -38,7 +38,8 @@ bool FDialogueParser::ReadFile(const FString& FilePath)
 		for (const FString& Line : FileLines)
 		{
 			// Skip empty lines or comments
-			if (Line.IsEmpty() || Line.StartsWith(TEXT("#"))) continue;
+			FString Trimmed = Line.TrimStart();
+			if (Trimmed.IsEmpty() || Trimmed.StartsWith(TEXT("#"))) continue;
 
 			DLOG(Log, "Parsing line: %s", *Line);
 			DLOG(Warning, "Indentation level: %d", Context->IndentationLevel);

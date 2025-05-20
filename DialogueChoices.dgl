@@ -1,8 +1,8 @@
 Yuu: "Dummy sentence1"
+[branch new]
+	Yuu: "Branch sentence."
 [choice]
 	Option1
-	[branch new]
-		Yuu: "Bad sentence."
 [choice]
 	Option2
 Yuu: "Dummy sentence2"
