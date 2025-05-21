@@ -42,7 +42,6 @@ bool FDialogueParser::ReadFile(const FString& FilePath)
 			if (Trimmed.IsEmpty() || Trimmed.StartsWith(TEXT("#"))) continue;
 
 			DLOG(Log, "Parsing line: %s", *Line);
-			DLOG(Warning, "Indentation level: %d", Context->IndentationLevel);
 			State = State->ProcessLine(Line, *Context);
 			if (!State || State == &FParserState::Error)
 			{

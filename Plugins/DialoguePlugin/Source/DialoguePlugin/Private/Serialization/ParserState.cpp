@@ -145,6 +145,14 @@ FParserState* FChoiceTextState::ProcessLine(const FString& Line, FDialogueParser
 		return &FParserState::Error;
 	}
 
+	FString ChoiceText = Line.TrimStartAndEnd();
+	if (!ChoiceText.StartsWith("\"") || !ChoiceText.EndsWith("\""))
+	{
+		DLOG(Error, "Choice option text should be surrounded by double quotation marks.");
+		return &FParserState::Error;
+	}
+
+	Choice->Options.Last().Text = ChoiceText.TrimStartAndEnd().Replace(TEXT("\""), TEXT(""));
 	Choice->Options.Last().Text = Line.TrimStartAndEnd();
 	DLOG(Log, "Choice option text: %s", *Line.TrimStartAndEnd());
 	return &FParserState::ChoiceMetaState;
@@ -157,6 +165,24 @@ FParserState* FChoiceMetaState::ProcessLine(const FString& Line, FDialogueParser
 	{
 		DLOG(Log, "Parsing meta data for the choice option...");
 		// TODO: Implement meta parsing for choice options
+
+		if (Line.Contains("goto"))
+		{
+			// Check if GotoID is not empty and warn of goto redefinition
+			UDialogueChoice* Choice = Cast<UDialogueChoice>(Context.CurrentNode);
+			if (Choice->Options.Last().GotoID != FName(""))
+			{
+				DLOG(Warning, "GotoID [%s] is already set for this choice option [%s]! It will be overridden.",
+					*Choice->Options.Last().GotoID.ToString(), *Choice->Options.Last().Text);
+			}
+
+			FString BranchName;
+			if (!MetaState.ParseGotoName(Line, BranchName)) return &FParserState::Error;
+
+			DLOG(Log, "Adding goto to a choice option: %s", *BranchName);
+			
+			Choice->Options.Last().GotoID = FName(BranchName);
+		}
 
 		// We return this state to check if there's any more metadata on the next line
 		return &FParserState::ChoiceMetaState;
@@ -235,9 +261,48 @@ bool FBranchState::ParseBranchName(const FString& Line, FString& BranchName)
 FParserState* FMetaState::ProcessLine(const FString& Line, FDialogueParserContext& Context)
 {
 	DLOG(Log, "Parsing meta...");
-	DLOG(Warning, "MetaParsing State is not implemented.");
+
+	if (Line.Contains("goto"))
+	{
+		FString BranchName;
+		if (!ParseGotoName(Line, BranchName)) return &FParserState::Error;
+
+		if (Context.BranchNode)
+		{
+			DLOG(Log, "Adding goto to a branch: %s", *BranchName);
+			Context.BranchNode->GotoID = FName(BranchName);
+			return &FParserState::BranchDispatcher;
+		}
+		DLOG(Error, "Goto is only available inside a branch!");
+		return &FParserState::Error;
+	}
 
 	return &FParserState::Error;
+}
+
+bool FMetaState::ParseGotoName(const FString& Line, FString& BranchName)
+{
+
+	if (!Line.Split(" ", nullptr, &BranchName, ESearchCase::IgnoreCase))
+	{
+		DLOG(Error, "Missing a space between the goto-keyword and branch name in %s", *Line);
+		return false;
+	}
+
+	BranchName = BranchName.TrimStartAndEnd();
+	if (!BranchName.EndsWith(TEXT("]")))
+	{
+		DLOG(Error, "] is missing after the branch name in: %s", *Line);
+		return false;
+	}
+	BranchName = BranchName.Replace(TEXT("]"), TEXT(""));
+	BranchName = BranchName.TrimStartAndEnd();
+	if (BranchName.IsEmpty())
+	{
+		DLOG(Error, "Branch name is empty in: %s", *Line);
+		return false;
+	}
+	return true;
 }
 
 FParserState* FErrorState::ProcessLine(const FString& Line, FDialogueParserContext& Context)
@@ -265,14 +330,14 @@ FParserState* FDispatcherState::Dispatch(const FString& Line, FDialogueParserCon
 		return &FParserState::Error;
 	}
 
-	// If we can't parse the line, check if it's a branch or choice or fork
-	if (Line.Contains("[") && Line.Contains("]") && Line.Contains("choice"))
+	const FString Tag = ExtractTag(Line).ToLower();
+	if (Tag.StartsWith("choice"))
 		return ChoiceState.ProcessLine(Line, Context);
-	if (Line.Contains("[") && Line.Contains("]") && Line.Contains("branch"))
+	if (Tag.StartsWith("branch"))
 		return BranchState.ProcessLine(Line, Context);
-	if (CanParseMeta(Line))
+	if (Tag.StartsWith("goto") || Tag.StartsWith("set") || Tag.StartsWith("condition"))
 		return MetaState.ProcessLine(Line, Context);
-	if (Line.Contains(":"))
+	if (Tag == "")
 		return SentenceState.ProcessLine(Line, Context);
 
 	return &FParserState::Error;

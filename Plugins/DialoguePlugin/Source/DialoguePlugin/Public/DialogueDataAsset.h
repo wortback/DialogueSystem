@@ -86,7 +86,7 @@ public:
 };
 
 UCLASS(Abstract)
-class UDialogueNodeChained : public UDialogueNodeBase
+class UDialogueNodeLinkable : public UDialogueNodeBase
 {
 	GENERATED_BODY()
 
@@ -97,7 +97,7 @@ public:
 };
 
 UCLASS(Blueprintable)
-class UDialogueSentence : public UDialogueNodeChained
+class UDialogueSentence : public UDialogueNodeLinkable
 {
 	GENERATED_BODY()
 
@@ -116,7 +116,7 @@ public:
  * If RequiredFlagState is satisfied, this branch is chosen and FirstID is used to enter its Content map.
  */
 UCLASS(Blueprintable)
-class UDialogueBranch : public UDialogueNodeBase
+class UDialogueBranch : public UDialogueNodeLinkable
 {
 	GENERATED_BODY()
 
@@ -130,6 +130,9 @@ public:
 	/** ID of the first node in the content map to jump to */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FName FirstID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	FName GotoID;
 // 
 // 	/** Higher priority branch is chosen if more than one branch's RequiredFlagState is satisfied
 // 	 * The higher is the value, the higher is the priority
@@ -163,7 +166,7 @@ struct FDialogueChoiceOption
 };
 
 UCLASS(Blueprintable)
-class UDialogueChoice : public UDialogueNodeChained
+class UDialogueChoice : public UDialogueNodeLinkable
 {
 	GENERATED_BODY()
 
@@ -173,7 +176,7 @@ public:
 };
 
 UCLASS(Blueprintable)
-class UDialogueFork : public UDialogueNodeChained
+class UDialogueFork : public UDialogueNodeLinkable
 {
 	GENERATED_BODY()
 

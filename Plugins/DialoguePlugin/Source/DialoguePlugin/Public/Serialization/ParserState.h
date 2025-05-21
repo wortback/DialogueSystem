@@ -35,11 +35,11 @@ public:
 	static FDispatcherState Dispatcher;
 
 public:
-
 	virtual ~FParserState() {};
 
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) = 0;
 
+protected:
 	static FName GenerateID(FDialogueParserContext& Context)
 	{
 		return FName(*FString::Printf(TEXT("ID_%d"), ++Context.IDCounter));
@@ -54,6 +54,16 @@ public:
 	{
 		return Line.Contains("[") && Line.Contains("]")
 			&& (Line.Contains("condition") || Line.Contains("goto") || Line.Contains("set"));
+	}
+
+	FString ExtractTag(const FString& Line)
+	{
+		int32 Start, End;
+		if (Line.FindChar('[', Start) && Line.FindChar(']', End) && End > Start)
+		{
+			return Line.Mid(Start + 1, End - Start - 1).TrimStartAndEnd();
+		}
+		return "";
 	}
 };
 
@@ -135,7 +145,10 @@ private:
 
 class FMetaState final : public FParserState
 {
+	friend class FChoiceMetaState;
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
+private:
+	bool ParseGotoName(const FString& Line, FString& BranchName);
 };
 

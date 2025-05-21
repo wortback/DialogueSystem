@@ -88,9 +88,9 @@ public:
 	bool TryLinkNodes(FName ID)
 	{
 		// check if there's a previous node is a chain node and set its NextID to this one
-		if (PrevNode && PrevNode->IsA(UDialogueNodeChained::StaticClass()))
+		if (PrevNode && PrevNode->IsA(UDialogueNodeLinkable::StaticClass()))
 		{
-			UDialogueNodeChained* Prev = Cast<UDialogueNodeChained>(PrevNode);
+			UDialogueNodeLinkable* Prev = Cast<UDialogueNodeLinkable>(PrevNode);
 			Prev->NextID = ID;
 			DLOG(Log, "Successfully linked nodes!");
 			return true;
