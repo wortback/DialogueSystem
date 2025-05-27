@@ -46,6 +46,9 @@ public:
 	/** Tracks the indentation level (i.e. num of tab characters before text) */
 	int32 IndentationLevel = 0;
 
+	/** Holds the names of all flags that were found in the file but not defined in the asset */
+	TArray<FString> MissingFlags;
+
 private:
 	FDialogueParserContext() {}
 

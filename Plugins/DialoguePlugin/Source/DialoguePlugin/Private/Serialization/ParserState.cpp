@@ -18,6 +18,7 @@ FChoiceMetaState FParserState::ChoiceMetaState;
 FMetaState FParserState::MetaState;
 FErrorState FParserState::Error;
 FDispatcherState FParserState::Dispatcher;
+FExtractFlagsState FParserState::ExtractFlagsState;
 
 
 
@@ -180,7 +181,7 @@ FParserState* FChoiceMetaState::ProcessLine(const FString& Line, FDialogueParser
 			if (!MetaState.ParseGotoName(Line, BranchName)) return &FParserState::Error;
 
 			DLOG(Log, "Adding goto to a choice option: %s", *BranchName);
-			
+
 			Choice->Options.Last().GotoID = FName(BranchName);
 		}
 
@@ -233,21 +234,16 @@ FParserState* FBranchState::ProcessLine(const FString& Line, FDialogueParserCont
 
 bool FBranchState::ParseBranchName(const FString& Line, FString& BranchName)
 {
+	FString Trimmed = TrimSquareBrackets(Line);
 
-	if (!Line.Split(" ", nullptr, &BranchName, ESearchCase::IgnoreCase))
+	if (!Trimmed.Split(" ", nullptr, &BranchName, ESearchCase::IgnoreCase))
 	{
 		DLOG(Error, "Missing a space between the branch name and the keyword in %s", *Line);
 		return false;
 	}
 
 	BranchName = BranchName.TrimStartAndEnd();
-	if (!BranchName.EndsWith(TEXT("]")))
-	{
-		DLOG(Error, "] is missing after the branch name in: %s", *Line);
-		return false;
-	}
-	BranchName = BranchName.Replace(TEXT("]"), TEXT(""));
-	BranchName = BranchName.TrimStartAndEnd();
+
 	if (BranchName.IsEmpty())
 	{
 		DLOG(Error, "Branch name is empty in: %s", *Line);
@@ -282,21 +278,16 @@ FParserState* FMetaState::ProcessLine(const FString& Line, FDialogueParserContex
 
 bool FMetaState::ParseGotoName(const FString& Line, FString& BranchName)
 {
+	FString Trimmed = TrimSquareBrackets(Line);
 
-	if (!Line.Split(" ", nullptr, &BranchName, ESearchCase::IgnoreCase))
+	if (!Trimmed.Split(" ", nullptr, &BranchName, ESearchCase::IgnoreCase))
 	{
 		DLOG(Error, "Missing a space between the goto-keyword and branch name in %s", *Line);
 		return false;
 	}
 
 	BranchName = BranchName.TrimStartAndEnd();
-	if (!BranchName.EndsWith(TEXT("]")))
-	{
-		DLOG(Error, "] is missing after the branch name in: %s", *Line);
-		return false;
-	}
-	BranchName = BranchName.Replace(TEXT("]"), TEXT(""));
-	BranchName = BranchName.TrimStartAndEnd();
+
 	if (BranchName.IsEmpty())
 	{
 		DLOG(Error, "Branch name is empty in: %s", *Line);
@@ -330,7 +321,10 @@ FParserState* FDispatcherState::Dispatch(const FString& Line, FDialogueParserCon
 		return &FParserState::Error;
 	}
 
-	const FString Tag = ExtractTag(Line).ToLower();
+	FString Tag;
+	if (!ExtractTag(Line, Tag)) return &FParserState::Error;
+
+	Tag = Tag.ToLower();
 	if (Tag.StartsWith("choice"))
 		return ChoiceState.ProcessLine(Line, Context);
 	if (Tag.StartsWith("branch"))
@@ -359,4 +353,75 @@ FParserState* FBranchDispatcherState::ProcessLine(const FString& Line, FDialogue
 	}
 
 	return Dispatcher.Dispatch(Line, Context);
+}
+
+FParserState* FExtractFlagsState::ProcessLine(const FString& Line, FDialogueParserContext& Context)
+{
+	FString Tag;
+	if (!ExtractTag(Line, Tag)) return &FParserState::Error;
+
+	Tag = Tag.ToLower();
+	if (Tag.StartsWith("set") || Tag.StartsWith("condition"))
+	{
+		FString FlagName;
+
+		// Try to parse the flag name
+		if (!ParseFlagName(Line, FlagName)) return &FParserState::Error;
+
+		if (!FindFlag(FlagName))
+		{
+			DLOG(Warning, "Couldn't find UDialogueFlag asset.");
+			Context.MissingFlags.Add(FlagName);
+		}
+	}
+	return &FParserState::ExtractFlagsState;
+}
+
+bool FExtractFlagsState::FindFlag(const FString& FlagName)
+{
+	const FString AssetPath = FString::Printf(
+		TEXT("/Game/Dialogue/%s.%s"),
+		*FlagName,
+		*FlagName
+	);
+
+	// try to load
+	UDialogueFlag* FlagAsset = Cast<UDialogueFlag>(
+		StaticLoadObject(UDialogueFlag::StaticClass(), /*Outer=*/nullptr, *AssetPath));
+
+	return FlagAsset != nullptr;
+}
+
+bool FExtractFlagsState::ParseFlagName(const FString& Line, FString& FlagName)
+{
+	// Separate the keyword from the rest
+	FString Trimmed = TrimSquareBrackets(Line);
+
+	if (!Trimmed.Split(" ", nullptr, &FlagName, ESearchCase::IgnoreCase))
+	{
+		DLOG(Error, "Missing a space between the keyword and flag name in %s", *Line);
+		return false;
+	}
+
+	DLOG(Warning, "Flag name is: %s", *FlagName);
+
+	// Split by the flag delimiter
+	bool bParsed = false;
+	for (FString& Del : TArray<FString>{ ">=", "<=", "=", "<", ">", "-", "+" })
+	{
+		if (FlagName.Split(Del, &FlagName, nullptr, ESearchCase::IgnoreCase))
+		{
+			bParsed = true;
+			break;
+		}
+	}
+	if (!bParsed) return false;
+
+	FlagName = FlagName.TrimStartAndEnd();
+	if (FlagName.IsEmpty())
+	{
+		DLOG(Error, "Flag name is empty in: %s", *Line);
+		return false;
+	}
+	return true;
 }

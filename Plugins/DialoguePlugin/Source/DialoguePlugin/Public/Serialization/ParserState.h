@@ -15,6 +15,7 @@ class FChoiceMetaState;
 class FMetaState;
 class FErrorState;
 class FDispatcherState;
+class FExtractFlagsState;
 
 
 /**
@@ -30,6 +31,7 @@ public:
 	static FChoiceTextState ChoiceTextState;
 	static FChoiceMetaState ChoiceMetaState;
 	static FMetaState MetaState;
+	static FExtractFlagsState ExtractFlagsState;
 
 	static FErrorState Error;
 	static FDispatcherState Dispatcher;
@@ -56,14 +58,39 @@ protected:
 			&& (Line.Contains("condition") || Line.Contains("goto") || Line.Contains("set"));
 	}
 
-	FString ExtractTag(const FString& Line)
+	/**
+	 * Extracts the tag from a line, e.g. "[goto BranchName]"
+	 * If the line does not contain a tag, it returns an empty string.
+	 * If the line contains only an opening or (exclusive) closing brace, it returns false.
+	 * 
+	 * @param Line The line to extract the tag from
+	 * @param Tag The output string that will hold the extracted tag
+	 * 
+	 * @return true if the tag was successfully extracted, false otherwise
+	 */
+	bool ExtractTag(const FString& Line, FString& Tag)
 	{
 		int32 Start, End;
 		if (Line.FindChar('[', Start) && Line.FindChar(']', End) && End > Start)
 		{
-			return Line.Mid(Start + 1, End - Start - 1).TrimStartAndEnd();
+			Tag = Line.Mid(Start + 1, End - Start - 1).TrimStartAndEnd();
+			return true;
 		}
-		return "";
+		// No braces -> sentence
+		if (!Line.FindChar('[', Start) && !Line.FindChar(']', End))
+		{
+			Tag = "";
+			return true;
+		}
+		return false;
+	}
+
+	FString TrimSquareBrackets(const FString& Line)
+	{
+		FString Trimmed = Line.TrimStartAndEnd();
+		Trimmed = Trimmed.Replace(TEXT("["), TEXT(""));
+		Trimmed = Trimmed.Replace(TEXT("]"), TEXT(""));
+		return Trimmed.TrimStartAndEnd();
 	}
 };
 
@@ -152,3 +179,12 @@ private:
 	bool ParseGotoName(const FString& Line, FString& BranchName);
 };
 
+class FExtractFlagsState final : public FParserState
+{
+public:
+	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
+private:
+	bool FindFlag(const FString& FlagName);
+
+	bool ParseFlagName(const FString& Line, FString& FlagName);
+};

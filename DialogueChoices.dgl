@@ -2,16 +2,12 @@ Yuu: "I want to eat smth"
 Ash: "What?"
 [choice]
 	"Pizza"
-	[goto non_existant_branch]
+	[condition LikesPizza = true]
 [choice]
 	"Sushi"
-	[goto branch_sushi]
-[branch sushi]
-	Yuu: "Sushi are tasty"
-	[goto pizza]
-	
-[branch pizza]
-	Yuu: "Pizza is so-so."
-
+	[condition LikesSushi=true]
+	[   goto    branch1   ]    
 Yuu: "Anyway, glad we spent some time together."
 Yuu: "I'll miss you!"
+[   branch    newbr   ]
+	Yuu: "I'll miss you!"

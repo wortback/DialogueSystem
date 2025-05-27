@@ -31,4 +31,9 @@ private:
 	bool ReadFile(const FString& FilePath);
 
 	void LogParseResult(const UDialogueDataAsset& OutAsset);
+
+	/** Extracts all flags from the file and tries to find the corresponding FlagDataAssets
+	 * @return true if all flags are found, false otherwise
+	 */
+	bool ValidateFlags(const FString& FilePath);
 };

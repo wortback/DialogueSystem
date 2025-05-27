@@ -22,6 +22,8 @@ bool FDialogueParser::ParseFile(const FString& FilePath, UDialogueDataAsset& Out
 		DLOG(Warning, "Clearing existing data in the asset...");
 	}
 
+	ValidateFlags(FilePath);
+
 	bool bSuccess = ReadFile(FilePath);
 	if (bSuccess)
 	{
@@ -34,6 +36,7 @@ bool FDialogueParser::ReadFile(const FString& FilePath)
 {
 	if (FFileHelper::LoadFileToStringArray(FileLines, *FilePath))
 	{
+		State = &FParserState::Dispatcher;
 		int32 Counter = 0;
 		for (const FString& Line : FileLines)
 		{
@@ -80,5 +83,46 @@ void FDialogueParser::LogParseResult(const UDialogueDataAsset& OutAsset)
 			DLOG(Log, "[%s] %s: %s", *Pair.Key.ToString(), *Sentence->Speaker, *Sentence->Text);
 		}
 	}
+}
+
+bool FDialogueParser::ValidateFlags(const FString& FilePath)
+{
+	if (FFileHelper::LoadFileToStringArray(FileLines, *FilePath))
+	{
+		State = &FParserState::ExtractFlagsState;
+		int32 Counter = 0;
+		for (const FString& Line : FileLines)
+		{
+			// Skip empty lines or comments
+			FString Trimmed = Line.TrimStart();
+			if (Trimmed.IsEmpty() || Trimmed.StartsWith(TEXT("#"))) continue;
+
+			State = State->ProcessLine(Line, *Context);
+			if (!State || State == &FParserState::Error)
+			{
+				DLOG(Error, "Parsing was aborted due to an error.");
+				DLOG(Error, "Line number: %d", Counter);
+				DLOG(Error, "Line content: %s", *Line);
+				return false;
+			}
+			Counter++;
+		}
+
+		// Check the missing flags in the context
+		if (Context->MissingFlags.Num() > 0)
+		{
+			DLOG(Error, "The following flags were found in the file but not defined in the asset:");
+			for (const FString& Flag : Context->MissingFlags)
+			{
+				DLOG(Error, "- %s", *Flag);
+			}
+			return false;
+		}
+		DLOG(Log, "All flags were found in the asset.");
+		return true;
+	}
+
+	DLOG(Error, "Failed to read file: %s", *FilePath);
+	return false;
 }
 
