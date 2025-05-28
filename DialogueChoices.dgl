@@ -1,13 +1,24 @@
-Yuu: "I want to eat smth"
-Ash: "What?"
+[branch branchPizza]
+	B: "Was tasty, right?"
+	A: "Very much so!"
+A: "I want to eat smth"
+B: "What?"
 [choice]
 	"Pizza"
 	[condition LikesPizza = true]
+	[goto branchPizza]    
 [choice]
 	"Sushi"
 	[condition LikesSushi=true]
-	[   goto    branch1   ]    
-Yuu: "Anyway, glad we spent some time together."
-Yuu: "I'll miss you!"
-[   branch    newbr   ]
-	Yuu: "I'll miss you!"
+B: "Anyway, glad we spent some time together."
+
+# this is a comment line
+[branch branchSushi]
+	B: "Was tasty, right?"
+
+
+
+
+
+
+

@@ -6,6 +6,7 @@
 #include "Engine/DataAsset.h"
 #include "Engine/DataTable.h"
 #include "DialogueFlag.h"
+#include "DialogueLogging.h"
 #include "DialogueDataAsset.generated.h"
 
 
@@ -83,6 +84,8 @@ class UDialogueNodeBase : public UObject
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FName ID;
+
+	virtual void LogNode() const {};
 };
 
 UCLASS(Abstract)
@@ -109,6 +112,11 @@ public:
 	/** What the speaker is currently saying */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FString Text;
+
+	virtual void LogNode() const override
+	{
+		DLOG(Log, "[Sentence %s] (%s): (%s)", *ID.ToString(), *Speaker, *Text);
+	}
 };
 
 /**
@@ -133,12 +141,17 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FName GotoID;
-// 
-// 	/** Higher priority branch is chosen if more than one branch's RequiredFlagState is satisfied
-// 	 * The higher is the value, the higher is the priority
-// 	 */
-// 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-// 	int32 Priority = 0;
+
+	virtual void LogNode() const override
+	{
+		DLOG(Log, "[Branch %s] Contains %d nodes.", *ID.ToString(), Content.Num());
+		DLOG(Log, "Listing the contents:");
+		for (const auto& Node : Content)
+		{
+			Node.Value->LogNode();
+		}
+		if (GotoID != "") DLOG(Log, "Branch jumps to: %s", *GotoID.ToString());
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -163,6 +176,16 @@ struct FDialogueChoiceOption
 
 	/** Used to hide this option from the player until conditions are met */
 	bool bIsHidden = false;
+
+	void LogOption() const
+	{
+		if (GotoID != "")
+		{
+			DLOG(Log, "   [Option] %s (goto %s)", *Text, *GotoID.ToString());
+		}
+		else
+			DLOG(Log, "   [Option] %s", *Text);
+	}
 };
 
 UCLASS(Blueprintable)
@@ -173,6 +196,16 @@ class UDialogueChoice : public UDialogueNodeLinkable
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	TArray<FDialogueChoiceOption> Options;
+
+	virtual void LogNode() const override
+	{
+		DLOG(Log, "[Choice %s] Contains %d options.", *ID.ToString(), Options.Num());
+		DLOG(Log, "Listing the contents:");
+		for (const auto& Opt : Options)
+		{
+			Opt.LogOption();
+		}
+	}
 };
 
 UCLASS(Blueprintable)

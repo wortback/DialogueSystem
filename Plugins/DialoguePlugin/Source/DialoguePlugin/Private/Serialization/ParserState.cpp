@@ -213,8 +213,15 @@ FParserState* FBranchState::ProcessLine(const FString& Line, FDialogueParserCont
 	// Branches' IDs are uniques and are set to the branch name
 	FString BranchName;
 	if (!ParseBranchName(Line, BranchName)) return &FParserState::Error;
-
 	FName ID = FName(BranchName);
+
+	// Check if the branch with this name has been defined already
+	if (Context.AssetBeingBuilt->DialogueMap.Contains(ID))
+	{
+		DLOG(Error, "Branch '%s' is multiply defined!", *ID.ToString());
+		return &FParserState::Error;
+	}
+
 	UDialogueBranch* Branch = Context.AddNode<UDialogueBranch>(ID, FString("BranchNode"));
 	Branch->ID = ID;
 

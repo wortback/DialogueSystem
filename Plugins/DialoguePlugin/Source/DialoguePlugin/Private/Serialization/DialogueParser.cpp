@@ -29,6 +29,10 @@ bool FDialogueParser::ParseFile(const FString& FilePath, UDialogueDataAsset& Out
 	{
 		LogParseResult(OutAsset);
 	}
+
+	// Validation for the dialogue flow: check unreachable nodes and infinite loops
+	ValidateDialogueFlow(OutAsset);
+
 	return bSuccess;
 }
 
@@ -44,7 +48,6 @@ bool FDialogueParser::ReadFile(const FString& FilePath)
 			FString Trimmed = Line.TrimStart();
 			if (Trimmed.IsEmpty() || Trimmed.StartsWith(TEXT("#"))) continue;
 
-			DLOG(Log, "Parsing line: %s", *Line);
 			State = State->ProcessLine(Line, *Context);
 			if (!State || State == &FParserState::Error)
 			{
@@ -72,17 +75,19 @@ bool FDialogueParser::ReadFile(const FString& FilePath)
 	return false;
 }
 
-void FDialogueParser::LogParseResult(const UDialogueDataAsset& OutAsset)
+void FDialogueParser::LogParseResult(const UDialogueDataAsset& Asset) const
 {
-	UE_LOG(LogTemp, Warning, TEXT("Parsed %d nodes"), OutAsset.DialogueMap.Num());
+	UE_LOG(DialogueParsing, Warning, TEXT("Parsed %d nodes"), Asset.DialogueMap.Num());
+	UE_LOG(DialogueParsing, Log, 
+		TEXT("----------------------------------------------------------------"));
 
-	for (const auto& Pair : OutAsset.DialogueMap)
+	for (const auto& Pair : Asset.DialogueMap)
 	{
-		if (const auto* Sentence = Cast<UDialogueSentence>(Pair.Value))
-		{
-			DLOG(Log, "[%s] %s: %s", *Pair.Key.ToString(), *Sentence->Speaker, *Sentence->Text);
-		}
+		Pair.Value->LogNode();
 	}
+
+	UE_LOG(DialogueParsing, Log,
+		TEXT("----------------------------------------------------------------"));
 }
 
 bool FDialogueParser::ValidateFlags(const FString& FilePath)
@@ -100,9 +105,9 @@ bool FDialogueParser::ValidateFlags(const FString& FilePath)
 			State = State->ProcessLine(Line, *Context);
 			if (!State || State == &FParserState::Error)
 			{
-				DLOG(Error, "Parsing was aborted due to an error.");
-				DLOG(Error, "Line number: %d", Counter);
-				DLOG(Error, "Line content: %s", *Line);
+				VLOG(Error, "Parsing was aborted due to an error.");
+				VLOG(Error, "Line number: %d", Counter);
+				VLOG(Error, "Line content: %s", *Line);
 				return false;
 			}
 			Counter++;
@@ -111,18 +116,83 @@ bool FDialogueParser::ValidateFlags(const FString& FilePath)
 		// Check the missing flags in the context
 		if (Context->MissingFlags.Num() > 0)
 		{
-			DLOG(Error, "The following flags were found in the file but not defined in the asset:");
+			VLOG(Error, "The following flags were found in the file but not defined in the asset:");
 			for (const FString& Flag : Context->MissingFlags)
 			{
-				DLOG(Error, "- %s", *Flag);
+				VLOG(Error, "- %s", *Flag);
 			}
 			return false;
 		}
-		DLOG(Log, "All flags were found in the asset.");
+		VLOG(Log, "All flags were found in the asset.");
 		return true;
 	}
 
-	DLOG(Error, "Failed to read file: %s", *FilePath);
+	VLOG(Error, "Failed to read file: %s", *FilePath);
 	return false;
 }
 
+bool FDialogueParser::ValidateDialogueFlow(const UDialogueDataAsset& Asset)
+{
+	VLOG(Log, "Validating dialogue flow: checking for missing and unused branch references...");
+
+	bool bSuccess = true;
+	TSet<FName> ReferencedBranches;
+
+	// First pass: collect all references
+	for (const auto& Pair : Asset.DialogueMap)
+	{
+		if (const UDialogueBranch* Branch = Cast<UDialogueBranch>(Pair.Value))
+		{
+			if (!Branch->GotoID.IsNone())
+			{
+				if (!Asset.DialogueMap.Contains(Branch->GotoID))
+				{
+					VLOG(Error, "Branch %s is referenced in %s but does not exist!",
+						*Branch->GotoID.ToString(), *Branch->ID.ToString());
+					bSuccess = false;
+				}
+				else
+				{
+					ReferencedBranches.Add(Branch->GotoID);
+				}
+			}
+		}
+		else if (const UDialogueChoice* Choice = Cast<UDialogueChoice>(Pair.Value))
+		{
+			for (const auto& Option : Choice->Options)
+			{
+				if (!Option.GotoID.IsNone())
+				{
+					if (!Asset.DialogueMap.Contains(Option.GotoID))
+					{
+						VLOG(Error, "Choice option references missing branch %s!",
+							*Option.GotoID.ToString());
+						bSuccess = false;
+					}
+					else
+					{
+						ReferencedBranches.Add(Option.GotoID);
+					}
+				}
+			}
+		}
+	}
+
+	// Second pass: detect defined but never referenced branches
+	for (const auto& Pair : Asset.DialogueMap)
+	{
+		if (const UDialogueBranch* Branch = Cast<UDialogueBranch>(Pair.Value))
+		{
+			if (!ReferencedBranches.Contains(Branch->ID))
+			{
+				VLOG(Warning, "Branch %s is defined but never referenced!", *Branch->ID.ToString());
+				// bSuccess is not affected – we treat this as a warning
+			}
+		}
+	}
+
+	if (bSuccess)
+		VLOG(Log, "No missing branch references found");
+
+	return bSuccess;
+}

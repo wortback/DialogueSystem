@@ -1,5 +1,5 @@
-//Summaries
-// Lines are separated by TAB.
+# Summaries
+# Lines are separated by TAB.
 
 [summary summaryname]
 	Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum 
@@ -11,7 +11,7 @@ Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum
 	Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum 
 Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum
 
-//Internal dialogue
+#Internal dialogue
 [internal internalname]
 	This game wrecks my brain. Do I want to continue palying? 
 	[choice]
@@ -28,7 +28,7 @@ Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum
 	I'm ready to keep on playing!
 	Let's play some more!
 
-// External dialogue
+# External dialogue
 [external externalname]
 	Ash: "I haven't seen you before. Where do you come from?"
 	Player: "My friend and I were fleeing from the strays and coincidentally ended up here."
@@ -58,3 +58,21 @@ Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum
 			Ash: "Anyway, let's go."
 	[branch br2]
 			Ash: "You will thank me later."
+
+
+A: "I want to eat smth"
+B: "What?"
+[choice]
+	"Pizza"
+	[condition LikesPizza = true]
+	[goto branchPizza]    
+[choice]
+	"Sushi"
+	[condition LikesSushi=true]
+B: "Anyway, glad we spent some time together."
+
+# this is a comment line
+[branch branchPizza]
+	B: "Was tasty, right?"
+	A: "Very much so!"
+	[set GoodMoodFlag+10]
