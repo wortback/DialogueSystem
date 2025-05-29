@@ -241,22 +241,7 @@ FParserState* FBranchState::ProcessLine(const FString& Line, FDialogueParserCont
 
 bool FBranchState::ParseBranchName(const FString& Line, FString& BranchName)
 {
-	FString Trimmed = TrimSquareBrackets(Line);
-
-	if (!Trimmed.Split(" ", nullptr, &BranchName, ESearchCase::IgnoreCase))
-	{
-		DLOG(Error, "Missing a space between the branch name and the keyword in %s", *Line);
-		return false;
-	}
-
-	BranchName = BranchName.TrimStartAndEnd();
-
-	if (BranchName.IsEmpty())
-	{
-		DLOG(Error, "Branch name is empty in: %s", *Line);
-		return false;
-	}
-	return true;
+	return ParseNameFromLine(Line, BranchName, TEXT("branch keyword"));
 }
 
 #pragma endregion
@@ -265,7 +250,7 @@ FParserState* FMetaState::ProcessLine(const FString& Line, FDialogueParserContex
 {
 	DLOG(Log, "Parsing meta...");
 
-	if (Line.Contains("goto"))
+	if (Context.ExtractedTag.StartsWith("goto"))
 	{
 		FString BranchName;
 		if (!ParseGotoName(Line, BranchName)) return &FParserState::Error;
@@ -276,8 +261,54 @@ FParserState* FMetaState::ProcessLine(const FString& Line, FDialogueParserContex
 			Context.BranchNode->GotoID = FName(BranchName);
 			return &FParserState::BranchDispatcher;
 		}
-		DLOG(Error, "Goto is only available inside a branch!");
+		DLOG(Error, "Goto is not available outside a choice or branch!");
 		return &FParserState::Error;
+	}
+
+	if (Context.ExtractedTag.StartsWith("set"))
+	{
+		FParsedFlag Parsed;
+		if (!ExtractFlagsState.ParseFlagExpression(Line, Parsed))
+			return &FParserState::Error;
+
+		// Set doesn't allow comparison symbols
+		if (Parsed.Comp != EFlagCompSymbol::None)
+		{
+			DLOG(Error, "You cannot use comparison operators with 'set' keyword!");
+			return &FParserState::Error;
+		}
+
+		// TODO: Update the dialogue asset with the parsed data
+
+		else
+		{
+			if (Context.BranchNode)
+				return &FParserState::BranchDispatcher;
+			return &FParserState::Dispatcher;
+		}
+	}
+
+	if (Context.ExtractedTag.StartsWith("condition"))
+	{
+		FParsedFlag Parsed;
+		if (!ExtractFlagsState.ParseFlagExpression(Line, Parsed))
+			return &FParserState::Error;
+
+		// Set doesn't allow comparison symbols
+		if (Parsed.Operator != EFlagOperator::None)
+		{
+			DLOG(Error, "You cannot use assignment operators with 'condition' keyword!");
+			return &FParserState::Error;
+		}
+
+		// TODO: Update the dialogue asset with the parsed data
+
+		else
+		{
+			if (Context.BranchNode)
+				return &FParserState::BranchDispatcher;
+			return &FParserState::Dispatcher;
+		}
 	}
 
 	return &FParserState::Error;
@@ -285,22 +316,7 @@ FParserState* FMetaState::ProcessLine(const FString& Line, FDialogueParserContex
 
 bool FMetaState::ParseGotoName(const FString& Line, FString& BranchName)
 {
-	FString Trimmed = TrimSquareBrackets(Line);
-
-	if (!Trimmed.Split(" ", nullptr, &BranchName, ESearchCase::IgnoreCase))
-	{
-		DLOG(Error, "Missing a space between the goto-keyword and branch name in %s", *Line);
-		return false;
-	}
-
-	BranchName = BranchName.TrimStartAndEnd();
-
-	if (BranchName.IsEmpty())
-	{
-		DLOG(Error, "Branch name is empty in: %s", *Line);
-		return false;
-	}
-	return true;
+	return ParseNameFromLine(Line, BranchName, TEXT("goto-keyword"));
 }
 
 FParserState* FErrorState::ProcessLine(const FString& Line, FDialogueParserContext& Context)
@@ -330,8 +346,10 @@ FParserState* FDispatcherState::Dispatch(const FString& Line, FDialogueParserCon
 
 	FString Tag;
 	if (!ExtractTag(Line, Tag)) return &FParserState::Error;
-
 	Tag = Tag.ToLower();
+
+	Context.ExtractedTag = Tag;
+
 	if (Tag.StartsWith("choice"))
 		return ChoiceState.ProcessLine(Line, Context);
 	if (Tag.StartsWith("branch"))
@@ -384,7 +402,7 @@ FParserState* FExtractFlagsState::ProcessLine(const FString& Line, FDialoguePars
 	return &FParserState::ExtractFlagsState;
 }
 
-bool FExtractFlagsState::FindFlag(const FString& FlagName)
+UDialogueFlag* FExtractFlagsState::FindFlag(const FString& FlagName)
 {
 	const FString AssetPath = FString::Printf(
 		TEXT("/Game/Dialogue/%s.%s"),
@@ -396,25 +414,19 @@ bool FExtractFlagsState::FindFlag(const FString& FlagName)
 	UDialogueFlag* FlagAsset = Cast<UDialogueFlag>(
 		StaticLoadObject(UDialogueFlag::StaticClass(), /*Outer=*/nullptr, *AssetPath));
 
-	return FlagAsset != nullptr;
+	return FlagAsset;
 }
 
 bool FExtractFlagsState::ParseFlagName(const FString& Line, FString& FlagName)
 {
-	// Separate the keyword from the rest
-	FString Trimmed = TrimSquareBrackets(Line);
-
-	if (!Trimmed.Split(" ", nullptr, &FlagName, ESearchCase::IgnoreCase))
-	{
-		DLOG(Error, "Missing a space between the keyword and flag name in %s", *Line);
+	if (!ParseNameFromLine(Line, FlagName, TEXT("keyword and flag name")))
 		return false;
-	}
 
 	DLOG(Warning, "Flag name is: %s", *FlagName);
 
-	// Split by the flag delimiter
+	// Additional operator split
 	bool bParsed = false;
-	for (FString& Del : TArray<FString>{ ">=", "<=", "=", "<", ">", "-", "+" })
+	for (const FString& Del : TArray<FString>{ ">=", "<=", "=", "<", ">", "-", "+" })
 	{
 		if (FlagName.Split(Del, &FlagName, nullptr, ESearchCase::IgnoreCase))
 		{
@@ -425,10 +437,81 @@ bool FExtractFlagsState::ParseFlagName(const FString& Line, FString& FlagName)
 	if (!bParsed) return false;
 
 	FlagName = FlagName.TrimStartAndEnd();
+
 	if (FlagName.IsEmpty())
 	{
 		DLOG(Error, "Flag name is empty in: %s", *Line);
 		return false;
 	}
+	return true;
+}
+
+bool FExtractFlagsState::ParseFlagExpression(const FString& Line, FParsedFlag& OutFlag)
+{
+	FString Trimmed = TrimSquareBrackets(Line);
+
+	FString Remainder;
+	if (!Trimmed.Split(" ", nullptr, &Remainder, ESearchCase::IgnoreCase))
+	{
+		DLOG(Error, "Missing a space between keyword and flag expression in %s", *Line);
+		return false;
+	}
+
+	FString Value;
+	// Look for known operators
+	for (const FString& Del : TArray<FString>{ "==", ">=", "<=", "<", ">", "=", "-", "+" })
+	{
+		if (Remainder.Split(Del, &OutFlag.Name, &Value, ESearchCase::IgnoreCase))
+		{
+			OutFlag.Comp = FlagCompFromString(Del);
+			OutFlag.Operator = FlagOpFromString(Del);
+			break;
+		}
+	}
+
+	OutFlag.Name = OutFlag.Name.TrimStartAndEnd();
+	Value = Value.TrimStartAndEnd();
+
+	// see if it's a numeric or boolean flag
+	if (Value.IsNumeric())
+		OutFlag.nValue = FCString::Atoi(*Value);
+	else
+	{
+		if (Value.Equals("true"))
+		{
+			OutFlag.bValue = true;
+		}
+		else if (Value.Equals("false"))
+		{
+			OutFlag.bValue = false;
+		}
+		else
+		{
+			DLOG(Error, "Invalid boolean: %s", *Value);
+			return false;
+		}
+
+		// Check that the user didn't use + or - with booleans
+		if (OutFlag.Operator != EFlagOperator::None)
+		{
+			if (OutFlag.Operator == EFlagOperator::Add || OutFlag.Operator == EFlagOperator::Subtract)
+			{
+				DLOG(Error, "+ or - operators cannot be used for boolean values!");
+				return false;
+			}
+		}
+	}
+
+	if (OutFlag.Name.IsEmpty()
+		|| (OutFlag.Comp == EFlagCompSymbol::None && OutFlag.Operator == EFlagOperator::None))
+	{
+		DLOG(Error, "Invalid flag expression in line: %s", *Line);
+		return false;
+	}
+
+	DLOG(Warning, "Parsed Flag - Name: %s, Operator: %s, ComparisonSymbol: %s, Value (n/b): %d or %s", *OutFlag.Name,
+		*FlagOpToString(OutFlag.Operator),
+		*FlagCompToString(OutFlag.Comp),
+		OutFlag.nValue, *LexToString(OutFlag.bValue));
 	return true;
 }

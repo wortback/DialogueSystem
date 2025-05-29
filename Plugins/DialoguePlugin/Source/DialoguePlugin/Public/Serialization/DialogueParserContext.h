@@ -32,6 +32,9 @@ public:
 	/** ID counter for node IDs within the same dialogue data asset */
 	int32 IDCounter = 0;
 
+	/** Caches the tag such as [set], [condition], [goto], etc. */
+	FString ExtractedTag;
+
 	/** Previous dialogue node that has been processed */
 	TObjectPtr<UDialogueNodeBase> PrevNode = nullptr;
 

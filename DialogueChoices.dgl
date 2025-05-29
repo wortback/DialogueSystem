@@ -14,6 +14,8 @@ B: "Anyway, glad we spent some time together."
 
 # this is a comment line
 [branch branchSushi]
+	[condition LikesSushi=true]
+	[set LikesSushi == 45]
 	B: "Was tasty, right?"
 
 

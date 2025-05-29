@@ -6,6 +6,15 @@
 #include "Serialization/DialogueParserContext.h"
 
 
+struct FParsedFlag
+{
+	FString Name;
+	EFlagCompSymbol Comp = EFlagCompSymbol::None;
+	EFlagOperator Operator = EFlagOperator::None;
+	bool bValue;
+	int32 nValue = INT_MAX;
+};
+
 class FSentenceState;
 class FChoiceState;
 class FBranchState;
@@ -91,6 +100,26 @@ protected:
 		Trimmed = Trimmed.Replace(TEXT("["), TEXT(""));
 		Trimmed = Trimmed.Replace(TEXT("]"), TEXT(""));
 		return Trimmed.TrimStartAndEnd();
+	}
+
+	bool ParseNameFromLine(const FString& Line, FString& OutName, const FString& ContextDescription)
+	{
+		FString Trimmed = TrimSquareBrackets(Line);
+
+		if (!Trimmed.Split(" ", nullptr, &OutName, ESearchCase::IgnoreCase))
+		{
+			DLOG(Error, "Missing a space between the %s and name in %s", *ContextDescription, *Line);
+			return false;
+		}
+
+		OutName = OutName.TrimStartAndEnd();
+
+		if (OutName.IsEmpty())
+		{
+			DLOG(Error, "Name is empty in: %s", *Line);
+			return false;
+		}
+		return true;
 	}
 };
 
@@ -181,10 +210,13 @@ private:
 
 class FExtractFlagsState final : public FParserState
 {
+	friend class FMetaState;
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
 private:
-	bool FindFlag(const FString& FlagName);
+	UDialogueFlag* FindFlag(const FString& FlagName);
 
 	bool ParseFlagName(const FString& Line, FString& FlagName);
+
+	bool ParseFlagExpression(const FString& Line, FParsedFlag& OutFlag);
 };

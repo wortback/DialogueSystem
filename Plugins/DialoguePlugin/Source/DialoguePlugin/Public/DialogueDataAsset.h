@@ -6,28 +6,9 @@
 #include "Engine/DataAsset.h"
 #include "Engine/DataTable.h"
 #include "DialogueFlag.h"
+#include "DialogueFlagUtils.h"
 #include "DialogueLogging.h"
 #include "DialogueDataAsset.generated.h"
-
-
-
-UENUM(BlueprintType)
-enum class EComparisonSymbol : uint8
-{
-	ECS_GreaterThan UMETA(DisplayName = "GreaterThan"),
-	ECS_LessThan UMETA(DisplayName = "LessThan"),
-	ECS_GreaterEquals UMETA(DisplayName = "GreaterEquals"),
-	ECS_LessEquals UMETA(DisplayName = "LessEquals"),
-	ECS_Equals UMETA(DisplayName = "Equals")
-};
-
-UENUM(BlueprintType)
-enum class EFlagOperator : uint8
-{
-	EFO_Add UMETA(DisplayName = "Add"),
-	EFO_Subtract UMETA(DisplayName = "Subtract"),
-	EFO_Set UMETA(DisplayName = "Set"),
-};
 
 
 USTRUCT(BlueprintType)
@@ -42,7 +23,7 @@ struct FFlagCondition
 	EFlagType FlagType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EComparisonSymbol ComparisonSymbol;
+	EFlagCompSymbol ComparisonSymbol;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 IntValue;
