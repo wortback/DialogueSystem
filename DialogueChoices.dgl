@@ -1,22 +1,17 @@
-[branch branchPizza]
-	B: "Was tasty, right?"
-	A: "Very much so!"
 A: "I want to eat smth"
 B: "What?"
 [choice]
 	"Pizza"
-	[condition LikesPizza = true]
-	[goto branchPizza]    
+	[set Count + 10]
+	[condition LikesPizza <= 423]
+	[goto branchPizza] 
+	[set LikesSushi = false]
+	
+	
 [choice]
 	"Sushi"
-	[condition LikesSushi=true]
+	[condition LikesSushi==false]
 B: "Anyway, glad we spent some time together."
-
-# this is a comment line
-[branch branchSushi]
-	[condition LikesSushi=true]
-	[set LikesSushi == 45]
-	B: "Was tasty, right?"
 
 
 

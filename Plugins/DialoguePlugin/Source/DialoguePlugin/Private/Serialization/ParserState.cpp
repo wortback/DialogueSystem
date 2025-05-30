@@ -165,12 +165,11 @@ FParserState* FChoiceMetaState::ProcessLine(const FString& Line, FDialogueParser
 	if (CanParseMeta(Line))
 	{
 		DLOG(Log, "Parsing meta data for the choice option...");
-		// TODO: Implement meta parsing for choice options
+		UDialogueChoice* Choice = Cast<UDialogueChoice>(Context.CurrentNode);
 
 		if (Line.Contains("goto"))
 		{
 			// Check if GotoID is not empty and warn of goto redefinition
-			UDialogueChoice* Choice = Cast<UDialogueChoice>(Context.CurrentNode);
 			if (Choice->Options.Last().GotoID != FName(""))
 			{
 				DLOG(Warning, "GotoID [%s] is already set for this choice option [%s]! It will be overridden.",
@@ -183,6 +182,40 @@ FParserState* FChoiceMetaState::ProcessLine(const FString& Line, FDialogueParser
 			DLOG(Log, "Adding goto to a choice option: %s", *BranchName);
 
 			Choice->Options.Last().GotoID = FName(BranchName);
+		}
+
+		if (Line.Contains("condition"))
+		{
+			FParsedFlag Parsed;
+			if (!ExtractFlagsState.ParseFlagExpression(Line, Parsed))
+				return &FParserState::Error;
+
+			// condition doesn't allow comparison symbols
+			if (Parsed.Operator != EFlagOperator::None)
+			{
+				DLOG(Error, "You cannot use assignment operators (i.e. =, +, -) with 'condition' keyword!");
+				DLOG(Error, "Please use comparison symbols instead (i.e. ==, >, <=, etc)!");
+				return &FParserState::Error;
+			}
+			// Update the choice option with the parsed data
+			Choice->Options.Last().Conditions.Add(Parsed.ToFlagCondition());
+		}
+
+		if (Line.Contains("set"))
+		{
+			FParsedFlag Parsed;
+			if (!ExtractFlagsState.ParseFlagExpression(Line, Parsed))
+				return &FParserState::Error;
+
+			// Set doesn't allow comparison symbols
+			if (Parsed.Comp != EFlagCompSymbol::None)
+			{
+				DLOG(Error, "You cannot use comparison symbols with 'set' keyword!");
+				DLOG(Error, "Please use assignment operators instead (i.e. =, +, -)!");
+				return &FParserState::Error;
+			}
+			// Update the choice option with the parsed data
+			Choice->Options.Last().AffectedFlags.Add(Parsed.ToFlagEffect());
 		}
 
 		// We return this state to check if there's any more metadata on the next line
@@ -275,29 +308,6 @@ FParserState* FMetaState::ProcessLine(const FString& Line, FDialogueParserContex
 		if (Parsed.Comp != EFlagCompSymbol::None)
 		{
 			DLOG(Error, "You cannot use comparison operators with 'set' keyword!");
-			return &FParserState::Error;
-		}
-
-		// TODO: Update the dialogue asset with the parsed data
-
-		else
-		{
-			if (Context.BranchNode)
-				return &FParserState::BranchDispatcher;
-			return &FParserState::Dispatcher;
-		}
-	}
-
-	if (Context.ExtractedTag.StartsWith("condition"))
-	{
-		FParsedFlag Parsed;
-		if (!ExtractFlagsState.ParseFlagExpression(Line, Parsed))
-			return &FParserState::Error;
-
-		// Set doesn't allow comparison symbols
-		if (Parsed.Operator != EFlagOperator::None)
-		{
-			DLOG(Error, "You cannot use assignment operators with 'condition' keyword!");
 			return &FParserState::Error;
 		}
 
@@ -500,6 +510,17 @@ bool FExtractFlagsState::ParseFlagExpression(const FString& Line, FParsedFlag& O
 				return false;
 			}
 		}
+
+		// Check that the user didn't use >[=] or <[=] with booleans
+		if (OutFlag.Comp != EFlagCompSymbol::None)
+		{
+			if (OutFlag.Comp == EFlagCompSymbol::LessThan || OutFlag.Comp == EFlagCompSymbol::LessEquals
+				|| OutFlag.Comp == EFlagCompSymbol::GreaterThan || OutFlag.Comp == EFlagCompSymbol::GreaterEquals)
+			{
+				DLOG(Error, "<[=] or >[=] operators cannot be used for boolean values!");
+				return false;
+			}
+		}
 	}
 
 	if (OutFlag.Name.IsEmpty()
@@ -509,9 +530,9 @@ bool FExtractFlagsState::ParseFlagExpression(const FString& Line, FParsedFlag& O
 		return false;
 	}
 
-	DLOG(Warning, "Parsed Flag - Name: %s, Operator: %s, ComparisonSymbol: %s, Value (n/b): %d or %s", *OutFlag.Name,
-		*FlagOpToString(OutFlag.Operator),
-		*FlagCompToString(OutFlag.Comp),
-		OutFlag.nValue, *LexToString(OutFlag.bValue));
+// 	DLOG(Warning, "Parsed Flag - Name: %s, Operator: %s, ComparisonSymbol: %s, Value (n/b): %d or %s", *OutFlag.Name,
+// 		*FlagOpToString(OutFlag.Operator),
+// 		*FlagCompToString(OutFlag.Comp),
+// 		OutFlag.nValue, *LexToString(OutFlag.bValue));
 	return true;
 }

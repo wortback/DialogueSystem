@@ -28,7 +28,6 @@ inline EFlagCompSymbol FlagCompFromString(const FString& Input)
 	if (Normalized == TEXT("<=")) return EFlagCompSymbol::LessEquals;
 	if (Normalized == TEXT("==")) return EFlagCompSymbol::Equals;
 
-	UE_LOG(LogTemp, Warning, TEXT("Unknown comparison symbol: %s"), *Input);
 	return EFlagCompSymbol::None;
 }
 
@@ -71,8 +70,6 @@ inline EFlagOperator FlagOpFromString(const FString& Input)
 	if (Normalized == TEXT("+") || Normalized == TEXT("add")) return EFlagOperator::Add;
 	if (Normalized == TEXT("-") || Normalized == TEXT("subtract")) return EFlagOperator::Subtract;
 	if (Normalized == TEXT("=") || Normalized == TEXT("set")) return EFlagOperator::Set;
-
-	UE_LOG(LogTemp, Warning, TEXT("Unknown flag operator: %s"), *Input);
 	return EFlagOperator::None;
 }
 

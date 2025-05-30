@@ -13,6 +13,28 @@ struct FParsedFlag
 	EFlagOperator Operator = EFlagOperator::None;
 	bool bValue;
 	int32 nValue = INT_MAX;
+
+	/** Convert this flag data into the condition data used in the dialogue asset */
+	FFlagCondition ToFlagCondition()
+	{
+		FFlagCondition Condition;
+		Condition.FlagName = Name;
+		Condition.ComparisonSymbol = Comp;
+		Condition.IntValue = nValue;
+		Condition.BoolValue = bValue;
+		return Condition;
+	}
+
+	/** Convert this flag data into the flag effect data used in the dialogue asset */
+	FFlagEffect ToFlagEffect()
+	{
+		FFlagEffect Effect;
+		Effect.FlagName = Name;
+		Effect.Operator = Operator;
+		Effect.IntValue = nValue;
+		Effect.BoolValue = bValue;
+		return Effect;
+	}
 };
 
 class FSentenceState;
@@ -211,6 +233,7 @@ private:
 class FExtractFlagsState final : public FParserState
 {
 	friend class FMetaState;
+	friend class FChoiceMetaState;
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
 private:

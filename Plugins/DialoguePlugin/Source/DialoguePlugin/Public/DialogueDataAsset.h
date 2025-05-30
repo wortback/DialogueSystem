@@ -17,10 +17,7 @@ struct FFlagCondition
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UDialogueFlag* Flag;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EFlagType FlagType;
+	FString FlagName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EFlagCompSymbol ComparisonSymbol;
@@ -30,6 +27,18 @@ struct FFlagCondition
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool BoolValue;
+
+	void LogCondition() const
+	{
+		if (IntValue != INT_MAX)
+		{
+			DLOG(Log, "		[Condition] %s %s %d", *FlagName,
+				*FlagCompToString(ComparisonSymbol), IntValue);
+		}
+		else
+			DLOG(Log, "		[Condition] %s %s %s", *FlagName,
+				*FlagCompToString(ComparisonSymbol), *LexToString(BoolValue));
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -38,10 +47,7 @@ struct FFlagEffect
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UDialogueFlag* Flag;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EFlagType FlagType;
+	FString FlagName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EFlagOperator Operator;
@@ -53,6 +59,18 @@ struct FFlagEffect
 	/** Value the bool flag is gonna be set to */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool BoolValue;
+
+	void LogEffect() const
+	{
+		if (IntValue != INT_MAX)
+		{
+			DLOG(Log, "		[Set] %s %s %d", *FlagName,
+				*FlagOpToString(Operator), IntValue);
+		}
+		else
+			DLOG(Log, "		[Set] %s %s %s", *FlagName,
+				*FlagOpToString(Operator), *LexToString(BoolValue));
+	}
 };
 
 
@@ -155,17 +173,24 @@ struct FDialogueChoiceOption
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Choice Option")
 	FName GotoID;
 
-	/** Used to hide this option from the player until conditions are met */
-	bool bIsHidden = false;
-
 	void LogOption() const
 	{
-		if (GotoID != "")
+		if (!GotoID.IsNone())
 		{
 			DLOG(Log, "   [Option] %s (goto %s)", *Text, *GotoID.ToString());
 		}
 		else
 			DLOG(Log, "   [Option] %s", *Text);
+
+		for (const auto& Cond : Conditions)
+		{
+			Cond.LogCondition();
+		}
+
+		for (const auto& Effect : AffectedFlags)
+		{
+			Effect.LogEffect();
+		}
 	}
 };
 
