@@ -78,7 +78,7 @@ bool FDialogueParser::ReadFile(const FString& FilePath)
 void FDialogueParser::LogParseResult(const UDialogueDataAsset& Asset) const
 {
 	UE_LOG(DialogueParsing, Warning, TEXT("Parsed %d nodes"), Asset.DialogueMap.Num());
-	UE_LOG(DialogueParsing, Log, 
+	UE_LOG(DialogueParsing, Log,
 		TEXT("----------------------------------------------------------------"));
 
 	for (const auto& Pair : Asset.DialogueMap)
@@ -141,41 +141,7 @@ bool FDialogueParser::ValidateDialogueFlow(const UDialogueDataAsset& Asset)
 	// First pass: collect all references
 	for (const auto& Pair : Asset.DialogueMap)
 	{
-		if (const UDialogueBranch* Branch = Cast<UDialogueBranch>(Pair.Value))
-		{
-			if (!Branch->GotoID.IsNone())
-			{
-				if (!Asset.DialogueMap.Contains(Branch->GotoID))
-				{
-					VLOG(Error, "Branch %s is referenced in %s but does not exist!",
-						*Branch->GotoID.ToString(), *Branch->ID.ToString());
-					bSuccess = false;
-				}
-				else
-				{
-					ReferencedBranches.Add(Branch->GotoID);
-				}
-			}
-		}
-		else if (const UDialogueChoice* Choice = Cast<UDialogueChoice>(Pair.Value))
-		{
-			for (const auto& Option : Choice->Options)
-			{
-				if (!Option.GotoID.IsNone())
-				{
-					if (!Asset.DialogueMap.Contains(Option.GotoID))
-					{
-						VLOG(Error, "Choice option references missing branch %s!",
-							*Option.GotoID.ToString());
-						bSuccess = false;
-					}
-					else
-					{
-						ReferencedBranches.Add(Option.GotoID);
-					}
-				}
-			}
-		}
+		bSuccess &= CollectReferenced(Pair.Value, ReferencedBranches, Asset);
 	}
 
 	// Second pass: detect defined but never referenced branches
@@ -190,9 +156,57 @@ bool FDialogueParser::ValidateDialogueFlow(const UDialogueDataAsset& Asset)
 			}
 		}
 	}
-
 	if (bSuccess)
 		VLOG(Log, "No missing branch references found");
 
+	return bSuccess;
+}
+
+bool FDialogueParser::CollectReferenced(const TObjectPtr<UDialogueNodeBase>& Node, TSet<FName>& ReferencedBranches,
+	const UDialogueDataAsset& Asset)
+{
+	bool bSuccess = true;
+	if (const UDialogueGotoNode* GotoNode = Cast<UDialogueGotoNode>(Node))
+	{
+		VLOG(Log, "Checking goto name %s", *GotoNode->GotoID.ToString());
+
+		if (!Asset.DialogueMap.Contains(GotoNode->GotoID))
+		{
+			VLOG(Error, "Branch %s is referenced in %s but does not exist!",
+				*GotoNode->GotoID.ToString(), *GotoNode->ID.ToString());
+			bSuccess = false;
+		}
+		else
+		{
+			ReferencedBranches.Add(GotoNode->GotoID);
+		}
+
+	}
+	if (const UDialogueBranch* Branch = Cast<UDialogueBranch>(Node))
+	{
+		for (const auto& NodeInBranch : Branch->Content)
+		{
+			bSuccess &= CollectReferenced(NodeInBranch.Value, ReferencedBranches, Asset);
+		}
+	}
+	else if (const UDialogueChoice* Choice = Cast<UDialogueChoice>(Node))
+	{
+		for (const auto& Option : Choice->Options)
+		{
+			if (!Option.GotoID.IsNone())
+			{
+				if (!Asset.DialogueMap.Contains(Option.GotoID))
+				{
+					VLOG(Error, "Choice option references missing branch %s!",
+						*Option.GotoID.ToString());
+					bSuccess = false;
+				}
+				else
+				{
+					ReferencedBranches.Add(Option.GotoID);
+				}
+			}
+		}
+	}
 	return bSuccess;
 }

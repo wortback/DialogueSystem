@@ -288,14 +288,30 @@ FParserState* FMetaState::ProcessLine(const FString& Line, FDialogueParserContex
 		FString BranchName;
 		if (!ParseGotoName(Line, BranchName)) return &FParserState::Error;
 
+		Context.PrevNode = Context.CurrentNode;
+		Context.CurrentNode = nullptr;
+		FName ID = GenerateID(Context);
+
 		if (Context.BranchNode)
 		{
-			DLOG(Log, "Adding goto to a branch: %s", *BranchName);
-			Context.BranchNode->GotoID = FName(BranchName);
+			UDialogueGotoNode* Node = Context.AddNodeBranch<UDialogueGotoNode>(ID, FString("GotoNode"));
+			Node->ID = ID;
+			Node->GotoID = FName(BranchName);
+
+			// check if there's a previous node is a chain node and set its NextID to this one
+			Context.TryLinkNodes(ID);
+			Context.CurrentNode = Node;
 			return &FParserState::BranchDispatcher;
 		}
-		DLOG(Error, "Goto is not available outside a choice or branch!");
-		return &FParserState::Error;
+
+		UDialogueGotoNode* Node = Context.AddNode<UDialogueGotoNode>(ID, FString("GotoNode"));
+		Node->ID = ID;
+		Node->GotoID = FName(BranchName);
+
+		// check if there's a previous node is a chain node and set its NextID to this one
+		Context.TryLinkNodes(ID);
+		Context.CurrentNode = Node;
+		return &FParserState::Dispatcher;
 	}
 
 	if (Context.ExtractedTag.StartsWith("set"))
@@ -307,18 +323,34 @@ FParserState* FMetaState::ProcessLine(const FString& Line, FDialogueParserContex
 		// Set doesn't allow comparison symbols
 		if (Parsed.Comp != EFlagCompSymbol::None)
 		{
-			DLOG(Error, "You cannot use comparison operators with 'set' keyword!");
+			DLOG(Error, "You cannot use comparison symbols with 'set' keyword!");
+			DLOG(Error, "Please use assignment operators instead (i.e. =, +, -)!");
 			return &FParserState::Error;
 		}
 
-		// TODO: Update the dialogue asset with the parsed data
-
-		else
+		Context.PrevNode = Context.CurrentNode;
+		Context.CurrentNode = nullptr;
+		FName ID = GenerateID(Context);
+		if (Context.BranchNode)
 		{
-			if (Context.BranchNode)
-				return &FParserState::BranchDispatcher;
-			return &FParserState::Dispatcher;
+			UDialogueFlagSet* Node = Context.AddNodeBranch<UDialogueFlagSet>(ID, FString("SetNode"));
+			Node->FlagEffect = Parsed.ToFlagEffect();
+			Node->ID = ID;
+
+			// check if there's a previous node is a chain node and set its NextID to this one
+			Context.TryLinkNodes(ID);
+			Context.CurrentNode = Node;
+			return &FParserState::BranchDispatcher;
 		}
+
+		UDialogueFlagSet* Node = Context.AddNode<UDialogueFlagSet>(ID, FString("SetNode"));
+		Node->FlagEffect = Parsed.ToFlagEffect();
+		Node->ID = ID;
+
+		// check if there's a previous node is a chain node and set its NextID to this one
+		Context.TryLinkNodes(ID);
+		Context.CurrentNode = Node;
+		return &FParserState::Dispatcher;
 	}
 
 	return &FParserState::Error;
@@ -530,9 +562,9 @@ bool FExtractFlagsState::ParseFlagExpression(const FString& Line, FParsedFlag& O
 		return false;
 	}
 
-// 	DLOG(Warning, "Parsed Flag - Name: %s, Operator: %s, ComparisonSymbol: %s, Value (n/b): %d or %s", *OutFlag.Name,
-// 		*FlagOpToString(OutFlag.Operator),
-// 		*FlagCompToString(OutFlag.Comp),
-// 		OutFlag.nValue, *LexToString(OutFlag.bValue));
+	// 	DLOG(Warning, "Parsed Flag - Name: %s, Operator: %s, ComparisonSymbol: %s, Value (n/b): %d or %s", *OutFlag.Name,
+	// 		*FlagOpToString(OutFlag.Operator),
+	// 		*FlagCompToString(OutFlag.Comp),
+	// 		OutFlag.nValue, *LexToString(OutFlag.bValue));
 	return true;
 }

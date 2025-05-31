@@ -52,6 +52,9 @@ public:
 	/** Holds the names of all flags that were found in the file but not defined in the asset */
 	TArray<FString> MissingFlags;
 
+	/** Keeps track of the current nested level in if-else constructions */
+	TArray<UDialogueBranch*> NestStack;
+
 private:
 	FDialogueParserContext() {}
 

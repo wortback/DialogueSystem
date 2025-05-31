@@ -54,4 +54,11 @@ private:
 	bool ValidateFlags(const FString& FilePath);
 
 	bool ValidateDialogueFlow(const UDialogueDataAsset& Asset);
+
+	/**
+	 *  @returns true if all collected references actually exist in the asset
+	 *  
+	 */
+	bool CollectReferenced(const TObjectPtr<UDialogueNodeBase>& Node, TSet<FName>& ReferencedBranches, 
+		const UDialogueDataAsset& Asset);
 };

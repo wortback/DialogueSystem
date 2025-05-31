@@ -1,17 +1,10 @@
-A: "I want to eat smth"
-B: "What?"
-[choice]
-	"Pizza"
+[branch branchPizza]
 	[set Count + 10]
-	[condition LikesPizza <= 423]
-	[goto branchPizza] 
-	[set LikesSushi = false]
-	
-	
-[choice]
-	"Sushi"
-	[condition LikesSushi==false]
-B: "Anyway, glad we spent some time together."
+	[goto branchPizzaa]
+	[goto branchza]
+	[set Count + 10]
+[set Count + 10]
+
 
 
 

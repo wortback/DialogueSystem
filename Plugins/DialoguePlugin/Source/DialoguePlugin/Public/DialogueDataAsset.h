@@ -99,6 +99,36 @@ public:
 };
 
 UCLASS(Blueprintable)
+class UDialogueFlagSet : public UDialogueNodeLinkable
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	FFlagEffect FlagEffect;
+
+	virtual void LogNode() const override
+	{
+		FlagEffect.LogEffect();
+	}
+};
+
+UCLASS(Blueprintable)
+class UDialogueGotoNode : public UDialogueNodeLinkable
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	FName GotoID;
+
+	virtual void LogNode() const override
+	{
+		DLOG(Log, "		[Goto %s] Goto Node jumps to: %s", *ID.ToString(), *GotoID.ToString());
+	}
+};
+
+UCLASS(Blueprintable)
 class UDialogueSentence : public UDialogueNodeLinkable
 {
 	GENERATED_BODY()
@@ -138,18 +168,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FName FirstID;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	FName GotoID;
-
 	virtual void LogNode() const override
 	{
 		DLOG(Log, "[Branch %s] Contains %d nodes.", *ID.ToString(), Content.Num());
-		DLOG(Log, "Listing the contents:");
+		DLOG(Log, "-------------------- START BRANCH -----------------------");
 		for (const auto& Node : Content)
 		{
 			Node.Value->LogNode();
 		}
-		if (GotoID != "") DLOG(Log, "Branch jumps to: %s", *GotoID.ToString());
+		DLOG(Log, "-------------------- END BRANCH -----------------------");
 	}
 };
 
