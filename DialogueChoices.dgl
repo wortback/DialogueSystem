@@ -1,11 +1,14 @@
-[branch branchPizza]
-	[set Count + 10]
-	[goto branchPizzaa]
-	[goto branchza]
-	[set Count + 10]
-[set Count + 10]
-
-
+A: "Nlvl0"
+[if LikesPizza==true]
+	A: "Nlvl1"
+	[if LikesPizza==true]
+		A: "Nlvl2"
+		[choice]
+			"Option1"
+		[choice]
+			"Option2"
+		A: "Nlvl2"
+A: "Nlvl0.2"
 
 
 

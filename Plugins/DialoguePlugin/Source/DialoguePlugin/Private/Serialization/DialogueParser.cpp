@@ -83,7 +83,7 @@ void FDialogueParser::LogParseResult(const UDialogueDataAsset& Asset) const
 
 	for (const auto& Pair : Asset.DialogueMap)
 	{
-		Pair.Value->LogNode();
+		Pair.Value->LogNode(0);
 	}
 
 	UE_LOG(DialogueParsing, Log,

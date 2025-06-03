@@ -53,7 +53,7 @@ public:
 	TArray<FString> MissingFlags;
 
 	/** Keeps track of the current nested level in if-else constructions */
-	TArray<UDialogueBranch*> NestStack;
+	TArray<UDialogueFork*> NestStack;
 
 private:
 	FDialogueParserContext() {}
@@ -94,9 +94,28 @@ public:
 		return Node;
 	}
 
+	template<typename T>
+	T* AddNodeFork(FName ID, const FString& NodeType, const FFlagCondition& Condition)
+	{
+		if (NestStack.IsEmpty())
+		{
+			DLOG(Error, "Nest stack for forks is empty. Cannot add node %s with ID %s", *NodeType, *ID.ToString());
+			return nullptr;
+		}
+
+		DLOG(Log, "Adding node %s with ID %s to the fork %s", *NodeType, *ID.ToString(), *NestStack.Last()->GetName());
+
+		FString NodeName = FString::Printf(TEXT("%s_%s"), *NodeType, *ID.ToString());
+		T* Node = NewObject<T>(AssetBeingBuilt, *NodeName);
+		Node->SetFlags(RF_Public | RF_Transactional);
+
+		NestStack.Last()->Branches.Add(FBranchWithCondition(Condition, Node));
+		return Node;
+	}
+
+	/** Check if the previous node is a chain node and set its NextID to the ID provided */
 	bool TryLinkNodes(FName ID)
 	{
-		// check if there's a previous node is a chain node and set its NextID to this one
 		if (PrevNode && PrevNode->IsA(UDialogueNodeLinkable::StaticClass()))
 		{
 			UDialogueNodeLinkable* Prev = Cast<UDialogueNodeLinkable>(PrevNode);

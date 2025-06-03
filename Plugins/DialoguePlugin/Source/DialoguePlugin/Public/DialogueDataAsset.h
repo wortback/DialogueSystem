@@ -28,15 +28,20 @@ struct FFlagCondition
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool BoolValue;
 
-	void LogCondition() const
+	void LogCondition(int32 Indent) const
 	{
+		FString Padding;
+		if (Indent > 0)
+		{
+			Padding = FString::ChrN(Indent, ' ');
+		}
 		if (IntValue != INT_MAX)
 		{
-			DLOG(Log, "		[Condition] %s %s %d", *FlagName,
+			DLOG(Log, "%s[Condition] %s %s %d", *Padding, *FlagName,
 				*FlagCompToString(ComparisonSymbol), IntValue);
 		}
 		else
-			DLOG(Log, "		[Condition] %s %s %s", *FlagName,
+			DLOG(Log, "%s[Condition] %s %s %s", *Padding, *FlagName,
 				*FlagCompToString(ComparisonSymbol), *LexToString(BoolValue));
 	}
 };
@@ -60,15 +65,21 @@ struct FFlagEffect
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool BoolValue;
 
-	void LogEffect() const
+	void LogEffect(int32 Indent) const
 	{
+		FString Padding;
+		if (Indent > 0)
+		{
+			Padding = FString::ChrN(Indent, ' ');
+		}
+
 		if (IntValue != INT_MAX)
 		{
-			DLOG(Log, "		[Set] %s %s %d", *FlagName,
+			DLOG(Log, "%s[Set] %s %s %d", *Padding, *FlagName,
 				*FlagOpToString(Operator), IntValue);
 		}
 		else
-			DLOG(Log, "		[Set] %s %s %s", *FlagName,
+			DLOG(Log, "%s[Set] %s %s %s", *Padding, *FlagName,
 				*FlagOpToString(Operator), *LexToString(BoolValue));
 	}
 };
@@ -84,7 +95,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FName ID;
 
-	virtual void LogNode() const {};
+	virtual void LogNode(int32 Indent) const {};
 };
 
 UCLASS(Abstract)
@@ -107,9 +118,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FFlagEffect FlagEffect;
 
-	virtual void LogNode() const override
+	virtual void LogNode(int32 Indent) const override
 	{
-		FlagEffect.LogEffect();
+		FlagEffect.LogEffect(Indent);
 	}
 };
 
@@ -122,9 +133,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FName GotoID;
 
-	virtual void LogNode() const override
+	virtual void LogNode(int32 Indent) const override
 	{
-		DLOG(Log, "		[Goto %s] Goto Node jumps to: %s", *ID.ToString(), *GotoID.ToString());
+		FString Padding;
+		if (Indent > 0)
+		{
+			Padding = FString::ChrN(Indent, ' ');
+		}
+		DLOG(Log, "%s[Goto %s] Goto Node jumps to: %s", *Padding, *ID.ToString(), *GotoID.ToString());
 	}
 };
 
@@ -142,9 +158,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FString Text;
 
-	virtual void LogNode() const override
+	virtual void LogNode(int32 Indent) const override
 	{
-		DLOG(Log, "[Sentence %s] (%s): (%s)", *ID.ToString(), *Speaker, *Text);
+		FString Padding;
+		if (Indent > 0)
+		{
+			Padding = FString::ChrN(Indent, ' ');
+		}
+		DLOG(Log, "%s[Sentence %s] (%s): (%s)", *Padding, *ID.ToString(), *Speaker, *Text);
 	}
 };
 
@@ -161,22 +182,40 @@ public:
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Dialogue")
 	TMap<FName, UDialogueNodeBase*> Content;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	TArray<FFlagCondition> RequiredFlagState;
-
 	/** ID of the first node in the content map to jump to */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FName FirstID;
 
-	virtual void LogNode() const override
+	virtual void LogNode(int32 Indent) const override
 	{
-		DLOG(Log, "[Branch %s] Contains %d nodes.", *ID.ToString(), Content.Num());
-		DLOG(Log, "-------------------- START BRANCH -----------------------");
+		FString Padding;
+		if (Indent > 0)
+		{
+			Padding = FString::ChrN(Indent, ' ');
+		}
+
+		DLOG(Log, "%s-------------------- START BRANCH -----------------------", *Padding);
 		for (const auto& Node : Content)
 		{
-			Node.Value->LogNode();
+			Node.Value->LogNode(Indent + 1);
 		}
-		DLOG(Log, "-------------------- END BRANCH -----------------------");
+		DLOG(Log, "%s-------------------- END BRANCH -----------------------", *Padding);
+	}
+
+	void LogNodeFromFork(int32 Indent, int32 BranchIndex)
+	{
+		FString Padding;
+		if (Indent > 0)
+		{
+			Padding = FString::ChrN(Indent, ' ');
+		}
+
+		DLOG(Log, "%s-------------------- START BRANCH %d -----------------------", *Padding, BranchIndex);
+		for (const auto& Node : Content)
+		{
+			Node.Value->LogNode(Indent + 1);
+		}
+		DLOG(Log, "%s-------------------- END BRANCH %d -----------------------", *Padding, BranchIndex);
 	}
 };
 
@@ -200,23 +239,29 @@ struct FDialogueChoiceOption
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Choice Option")
 	FName GotoID;
 
-	void LogOption() const
+	void LogOption(int32 Indent) const
 	{
+		FString Padding;
+		if (Indent > 0)
+		{
+			Padding = FString::ChrN(Indent, ' ');
+		}
+
 		if (!GotoID.IsNone())
 		{
-			DLOG(Log, "   [Option] %s (goto %s)", *Text, *GotoID.ToString());
+			DLOG(Log, "%s[Option] %s (goto %s)", *Padding, *Text, *GotoID.ToString());
 		}
 		else
-			DLOG(Log, "   [Option] %s", *Text);
+			DLOG(Log, "%s[Option] %s", *Padding, *Text);
 
 		for (const auto& Cond : Conditions)
 		{
-			Cond.LogCondition();
+			Cond.LogCondition(Indent);
 		}
 
 		for (const auto& Effect : AffectedFlags)
 		{
-			Effect.LogEffect();
+			Effect.LogEffect(Indent);
 		}
 	}
 };
@@ -230,15 +275,31 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	TArray<FDialogueChoiceOption> Options;
 
-	virtual void LogNode() const override
+	virtual void LogNode(int32 Indent) const override
 	{
-		DLOG(Log, "[Choice %s] Contains %d options.", *ID.ToString(), Options.Num());
-		DLOG(Log, "Listing the contents:");
+		FString Padding;
+		if (Indent > 0)
+		{
+			Padding = FString::ChrN(Indent, ' ');
+		}
+
 		for (const auto& Opt : Options)
 		{
-			Opt.LogOption();
+			Opt.LogOption(Indent + 1);
 		}
 	}
+};
+
+USTRUCT(BlueprintType)
+struct FBranchWithCondition
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	FFlagCondition Condition;
+
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Dialogue")
+	UDialogueBranch* Branch = nullptr;
 };
 
 UCLASS(Blueprintable)
@@ -247,8 +308,29 @@ class UDialogueFork : public UDialogueNodeLinkable
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Nesting")
+	int32 NestingLevel = 0;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	TArray<UDialogueBranch*> Branches;
+	TArray<FBranchWithCondition> Branches;
+
+	virtual void LogNode(int32 Indent) const override
+	{
+		FString Padding;
+		if (Indent > 0)
+		{
+			Padding = FString::ChrN(Indent, ' ');
+		}
+		DLOG(Log, "%s-------------------- START FORK -----------------------", *Padding);
+		int32 Counter = 0;
+		for (const auto& Pair : Branches)
+		{
+			Pair.Condition.LogCondition(Indent + 1);
+			Pair.Branch->LogNodeFromFork(Indent + 1, Counter);
+			Counter++;
+		}
+		DLOG(Log, "%s-------------------- END FORK -----------------------", *Padding);
+	}
 };
 #pragma endregion DialogueNodes
 

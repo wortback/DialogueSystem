@@ -47,6 +47,8 @@ class FMetaState;
 class FErrorState;
 class FDispatcherState;
 class FExtractFlagsState;
+class FForkState;
+class FNestedDispatcherState;
 
 
 /**
@@ -58,14 +60,16 @@ public:
 	static FSentenceState SentenceState;
 	static FChoiceState ChoiceState;
 	static FBranchState BranchState;
-	static FBranchDispatcherState BranchDispatcher;
 	static FChoiceTextState ChoiceTextState;
 	static FChoiceMetaState ChoiceMetaState;
 	static FMetaState MetaState;
 	static FExtractFlagsState ExtractFlagsState;
+	static FForkState ConditionalState;
 
 	static FErrorState Error;
 	static FDispatcherState Dispatcher;
+	static FBranchDispatcherState BranchDispatcher;
+	static FNestedDispatcherState NestedDispatcher;
 
 public:
 	virtual ~FParserState() {};
@@ -158,6 +162,7 @@ public:
 class FDispatcherState final : public FParserState
 {
 	friend class FBranchDispatcherState;
+	friend class FNestedDispatcherState;
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
 private:
@@ -165,6 +170,12 @@ private:
 };
 
 class FBranchDispatcherState final : public FParserState
+{
+public:
+	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
+};
+
+class FNestedDispatcherState final : public FParserState
 {
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
@@ -234,6 +245,7 @@ class FExtractFlagsState final : public FParserState
 {
 	friend class FMetaState;
 	friend class FChoiceMetaState;
+	friend class FForkState;
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
 private:
@@ -242,4 +254,12 @@ private:
 	bool ParseFlagName(const FString& Line, FString& FlagName);
 
 	bool ParseFlagExpression(const FString& Line, FParsedFlag& OutFlag);
+};
+
+class FForkState final : public FParserState {
+	friend class FBranchState;
+public:
+	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
+
+	void CreateAndLinkNestingBlock(FDialogueParserContext& Context, const FFlagCondition& Condition);
 };
