@@ -17,8 +17,8 @@ FChoiceMetaState FParserState::ChoiceMetaState;
 FMetaState FParserState::MetaState;
 FErrorState FParserState::Error;
 FDispatcherState FParserState::Dispatcher;
-FBranchDispatcherState FParserState::BranchDispatcher;
-FNestedDispatcherState FParserState::NestedDispatcher;
+FBranchDispatcherState FDispatcherState::BranchDispatcher;
+FNestedDispatcherState FDispatcherState::NestedDispatcher;
 FExtractFlagsState FParserState::ExtractFlagsState;
 FForkState FParserState::ConditionalState;
 
@@ -156,7 +156,6 @@ FParserState* FChoiceTextState::ProcessLine(const FString& Line, FDialogueParser
 	}
 
 	Choice->Options.Last().Text = ChoiceText.TrimStartAndEnd().Replace(TEXT("\""), TEXT(""));
-	Choice->Options.Last().Text = Line.TrimStartAndEnd();
 	DLOG(Log, "Choice option text: %s", *Line.TrimStartAndEnd());
 	return &FParserState::ChoiceMetaState;
 }
@@ -271,7 +270,7 @@ FParserState* FBranchState::ProcessLine(const FString& Line, FDialogueParserCont
 	// Increase the indentation level
 	Context.IndentationLevel++;
 
-	return &FParserState::BranchDispatcher;
+	return &FParserState::Dispatcher;
 }
 
 bool FBranchState::ParseBranchName(const FString& Line, FString& BranchName)
@@ -303,7 +302,7 @@ FParserState* FMetaState::ProcessLine(const FString& Line, FDialogueParserContex
 			// check if there's a previous node is a chain node and set its NextID to this one
 			Context.TryLinkNodes(ID);
 			Context.CurrentNode = Node;
-			return &FParserState::BranchDispatcher;
+			return &FParserState::Dispatcher;
 		}
 
 		UDialogueGotoNode* Node = Context.AddNode<UDialogueGotoNode>(ID, FString("GotoNode"));
@@ -342,7 +341,7 @@ FParserState* FMetaState::ProcessLine(const FString& Line, FDialogueParserContex
 			// check if there's a previous node is a chain node and set its NextID to this one
 			Context.TryLinkNodes(ID);
 			Context.CurrentNode = Node;
-			return &FParserState::BranchDispatcher;
+			return &FParserState::Dispatcher;
 		}
 
 		UDialogueFlagSet* Node = Context.AddNode<UDialogueFlagSet>(ID, FString("SetNode"));
@@ -598,7 +597,7 @@ FParserState* FForkState::ProcessLine(const FString& Line, FDialogueParserContex
 	{
 		CreateAndLinkNestingBlock(Context, Parsed.ToFlagCondition());
 		Context.IndentationLevel++;
-		return &FParserState::NestedDispatcher;
+		return &FParserState::Dispatcher;
 	}
 
 
@@ -615,14 +614,14 @@ FParserState* FForkState::ProcessLine(const FString& Line, FDialogueParserContex
 		Context.BranchNode = NodeBr;
 
 		Context.IndentationLevel++;
-		return &FParserState::NestedDispatcher;
+		return &FParserState::Dispatcher;
 	}
 	// if current nlvl > prev nlvl, -> a new nesting fork block
 	if (Context.IndentationLevel > Context.NestStack.Last()->NestingLevel)
 	{
 		CreateAndLinkNestingBlock(Context, Parsed.ToFlagCondition());
 		Context.IndentationLevel++;
-		return &FParserState::NestedDispatcher;
+		return &FParserState::Dispatcher;
 	}
 
 
@@ -687,6 +686,7 @@ FParserState* FNestedDispatcherState::ProcessLine(const FString& Line, FDialogue
 		// Instead we check the 
 		if (!Context.NestStack.IsEmpty() && Context.IndentationLevel <= Context.NestStack.Last()->NestingLevel)
 		{
+			DLOG(Log, "Attempt to pop the nest stack");
 			if (Context.IndentationLevel == Context.NestStack.Last()->NestingLevel && !bPopLast)
 				break;
 

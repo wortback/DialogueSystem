@@ -68,8 +68,6 @@ public:
 
 	static FErrorState Error;
 	static FDispatcherState Dispatcher;
-	static FBranchDispatcherState BranchDispatcher;
-	static FNestedDispatcherState NestedDispatcher;
 
 public:
 	virtual ~FParserState() {};
@@ -165,7 +163,11 @@ class FDispatcherState final : public FParserState
 	friend class FNestedDispatcherState;
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
+
 private:
+	static FBranchDispatcherState BranchDispatcher;
+	static FNestedDispatcherState NestedDispatcher;
+
 	FParserState* Dispatch(const FString& Line, FDialogueParserContext& Context);
 };
 
@@ -179,17 +181,6 @@ class FNestedDispatcherState final : public FParserState
 {
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
-};
-
-class FEndBlockState final : public FParserState
-{
-public:
-	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
-
-	void DecrementIndentation(FDialogueParserContext& Context)
-	{
-		Context.IndentationLevel--;
-	}
 };
 
 //////////////////////////////////////////////////////////////////////////
