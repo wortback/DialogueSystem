@@ -30,19 +30,22 @@ struct FFlagCondition
 
 	void LogCondition(int32 Indent) const
 	{
-		FString Padding;
-		if (Indent > 0)
+		const FString Pad = FString::ChrN(Indent, ' ');
+		if (ComparisonSymbol == EFlagCompSymbol::None)
 		{
-			Padding = FString::ChrN(Indent, ' ');
+			// nothing to log
+			return;
 		}
 		if (IntValue != INT_MAX)
 		{
-			DLOG(Log, "%s[Condition] %s %s %d", *Padding, *FlagName,
+			DLOG(Log, "%s[Condition] %s %s %d", *Pad, *FlagName,
 				*FlagCompToString(ComparisonSymbol), IntValue);
 		}
 		else
-			DLOG(Log, "%s[Condition] %s %s %s", *Padding, *FlagName,
+		{
+			DLOG(Log, "%s[Condition] %s %s %s", *Pad, *FlagName,
 				*FlagCompToString(ComparisonSymbol), *LexToString(BoolValue));
+		}
 	}
 
 	FString ToString() const
@@ -136,7 +139,17 @@ public:
 
 	virtual void LogNode(int32 Indent) const override
 	{
-		FlagEffect.LogEffect(Indent);
+		const FString Pad = FString::ChrN(Indent, ' ');
+		if (FlagEffect.IntValue != INT_MAX)
+		{
+			DLOG(Log, "%s[Set] %s %s %d", *Pad, *FlagEffect.FlagName,
+				*FlagOpToString(FlagEffect.Operator), FlagEffect.IntValue);
+		}
+		else
+		{
+			DLOG(Log, "%s[Set] %s %s %s", *Pad, *FlagEffect.FlagName,
+				*FlagOpToString(FlagEffect.Operator), *LexToString(FlagEffect.BoolValue));
+		}
 	}
 };
 
@@ -151,12 +164,8 @@ public:
 
 	virtual void LogNode(int32 Indent) const override
 	{
-		FString Padding;
-		if (Indent > 0)
-		{
-			Padding = FString::ChrN(Indent, ' ');
-		}
-		DLOG(Log, "%s[Goto %s] Goto Node jumps to: %s", *Padding, *ID.ToString(), *GotoID.ToString());
+		const FString Pad = FString::ChrN(Indent, ' ');
+		DLOG(Log, "%s[Goto] %s -> %s", *Pad, *ID.ToString(), *GotoID.ToString());
 	}
 };
 
@@ -176,12 +185,8 @@ public:
 
 	virtual void LogNode(int32 Indent) const override
 	{
-		FString Padding;
-		if (Indent > 0)
-		{
-			Padding = FString::ChrN(Indent, ' ');
-		}
-		DLOG(Log, "%s[Sentence %s] (%s): (%s)", *Padding, *ID.ToString(), *Speaker, *Text);
+		const FString Pad = FString::ChrN(Indent, ' ');
+		DLOG(Log, "%s[Sentence] %s: \"%s\"", *Pad, *Speaker, *Text);
 	}
 };
 
@@ -204,34 +209,39 @@ public:
 
 	virtual void LogNode(int32 Indent) const override
 	{
-		FString Padding;
-		if (Indent > 0)
+		const FString Pad = FString::ChrN(Indent, ' ');
+		DLOG(Log, "%s[Branch] ID=%s", *Pad, *ID.ToString());
+		// Recurse into each Content entry:
+		for (const auto& Pair : Content)
 		{
-			Padding = FString::ChrN(Indent, ' ');
+			if (Pair.Value)
+			{
+				Pair.Value->LogNode(Indent + 2);
+			}
 		}
-
-		DLOG(Log, "%s-------------------- START BRANCH -----------------------", *Padding);
-		for (const auto& Node : Content)
-		{
-			Node.Value->LogNode(Indent + 1);
-		}
-		DLOG(Log, "%s-------------------- END BRANCH -----------------------", *Padding);
 	}
 
-	void LogNodeFromFork(int32 Indent, int32 BranchIndex)
+	void LogNodeFromFork(int32 Indent, int32 BranchIndex) const
 	{
-		FString Padding;
-		if (Indent > 0)
+		// We assume the caller already logged [Branch %d] Condition: ... (with Indent - 2 spaces).
+		// Here, we just dump each child node at this indent level.
+		const FString Pad = FString::ChrN(Indent, ' ');
+
+		if (Content.Num() == 0)
 		{
-			Padding = FString::ChrN(Indent, ' ');
+			// If the branch has no content, show (empty)
+			DLOG(Log, "%s  (empty)", *Pad);
+			return;
 		}
 
-		DLOG(Log, "%s-------------------- START BRANCH %d -----------------------", *Padding, BranchIndex);
-		for (const auto& Node : Content)
+		for (const auto& Pair : Content)
 		{
-			Node.Value->LogNode(Indent + 1);
+			if (Pair.Value)
+			{
+				// Each child node logs itself with its own indent
+				Pair.Value->LogNode(Indent);
+			}
 		}
-		DLOG(Log, "%s-------------------- END BRANCH %d -----------------------", *Padding, BranchIndex);
 	}
 };
 
@@ -272,12 +282,12 @@ struct FDialogueChoiceOption
 
 		for (const auto& Cond : Conditions)
 		{
-			Cond.LogCondition(Indent);
+			Cond.LogCondition(Indent+1);
 		}
 
 		for (const auto& Effect : AffectedFlags)
 		{
-			Effect.LogEffect(Indent);
+			Effect.LogEffect(Indent+1);
 		}
 	}
 };
@@ -293,15 +303,27 @@ public:
 
 	virtual void LogNode(int32 Indent) const override
 	{
-		FString Padding;
-		if (Indent > 0)
-		{
-			Padding = FString::ChrN(Indent, ' ');
-		}
-
+		const FString Pad = FString::ChrN(Indent, ' ');
 		for (const auto& Opt : Options)
 		{
-			Opt.LogOption(Indent + 1);
+			// Log the choice text + optional goto on one line:
+			if (!Opt.GotoID.IsNone())
+			{
+				DLOG(Log, "%s[Choice] \"%s\" (goto %s)", *Pad, *Opt.Text, *Opt.GotoID.ToString());
+			}
+			else
+			{
+				DLOG(Log, "%s[Choice] \"%s\"", *Pad, *Opt.Text);
+			}
+			// Then indent and log any conditions or flag effects under this choice:
+			for (const auto& Cond : Opt.Conditions)
+			{
+				Cond.LogCondition(Indent + 2);
+			}
+			for (const auto& Eff : Opt.AffectedFlags)
+			{
+				Eff.LogEffect(Indent + 2);
+			}
 		}
 	}
 };
@@ -332,20 +354,32 @@ public:
 
 	virtual void LogNode(int32 Indent) const override
 	{
-		FString Padding;
-		if (Indent > 0)
+		const FString Pad = FString::ChrN(Indent, ' ');
+		// Now display each branch in order
+		for (int32 i = 0; i < Branches.Num(); ++i)
 		{
-			Padding = FString::ChrN(Indent, ' ');
+			const auto& B = Branches[i];
+			const FString BranchPad = FString::ChrN(Indent + 2, ' ');
+			// Show which branch index it is and its condition
+			if (B.Condition.ComparisonSymbol != EFlagCompSymbol::None)
+			{
+				DLOG(Log, "%sif %s:", *BranchPad, *B.Condition.ToString());
+			}
+			else
+			{
+				DLOG(Log, "%selse:", *BranchPad);
+			}
+
+			// Recurse into that branch's content
+			if (B.Branch)
+			{
+				B.Branch->LogNodeFromFork(Indent + 4, i);
+			}
+			else
+			{
+				DLOG(Log, "%s  (empty)", *BranchPad);
+			}
 		}
-		DLOG(Log, "%s-------------------- START FORK -----------------------", *Padding);
-		int32 Counter = 0;
-		for (const auto& Pair : Branches)
-		{
-			Pair.Condition.LogCondition(Indent + 1);
-			Pair.Branch->LogNodeFromFork(Indent + 1, Counter);
-			Counter++;
-		}
-		DLOG(Log, "%s-------------------- END FORK -----------------------", *Padding);
 	}
 };
 #pragma endregion DialogueNodes

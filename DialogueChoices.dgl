@@ -1,12 +1,15 @@
+[branch Realloc]
+	A: "Nlvl0"
 A: "Nlvl0"
 [if LikesPizza == true]
 	[if LikesSushi==false]
 		[choice]
 			"choice1"
+			[condition LikesPizza == false]
 			[set LikesPizza = false]
 		[choice]
 			"choice 2"
 	[else]
 		[set LikesSushi = true]
 	A: "Nlvl0"
-[else]
+
