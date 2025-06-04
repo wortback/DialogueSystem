@@ -61,4 +61,9 @@ private:
 	 */
 	bool CollectReferenced(const TObjectPtr<UDialogueNodeBase>& Node, TSet<FName>& ReferencedBranches, 
 		const UDialogueDataAsset& Asset);
+
+	/**
+	 *  @return true if all forks have at least one branch that is not empty
+	 */
+	bool ValidateForks(const TObjectPtr<UDialogueNodeBase>& Node);
 };

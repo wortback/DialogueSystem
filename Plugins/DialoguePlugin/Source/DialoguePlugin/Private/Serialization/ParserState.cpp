@@ -579,42 +579,53 @@ bool FExtractFlagsState::ParseFlagExpression(const FString& Line, FParsedFlag& O
 FParserState* FForkState::ProcessLine(const FString& Line, FDialogueParserContext& Context)
 {
 	// check if that 'else' is not standalone
+	if (Context.ExtractedTag.StartsWith("else")
+		&& (Context.NestStack.IsEmpty() || Context.NestStack.Last()->Branches.IsEmpty()))
+	{
+		DLOG(Error, "'else' without an 'if'.");
+		return &FParserState::Error;
+	}
+
+	// only parse the flag for an if
+	FParsedFlag Parsed;
 	if (Context.ExtractedTag.StartsWith("if"))
 	{
-		FParsedFlag Parsed;
 		if (!ExtractFlagsState.ParseFlagExpression(Line, Parsed))
 			return &FParserState::Error;
-
-		if (Context.NestStack.IsEmpty())
-		{
-			CreateAndLinkNestingBlock(Context, Parsed.ToFlagCondition());
-			Context.IndentationLevel++;
-			return &FParserState::NestedDispatcher;
-		}
-		// if the stack is not empty we need to differentiate between a new if block at the same indent level or at a deeper level
-
-			// if current nlvl == prev nlvl, the branches belong to the same fork
-		if (Context.IndentationLevel == Context.NestStack.Last()->NestingLevel)
-		{
-			// Create a new branch in the fork node
-			FName IDBr = GenerateID(Context);
-			UDialogueBranch* NodeBr = Context.AddNodeFork<UDialogueBranch>(IDBr, FString("IFNode"), Parsed.ToFlagCondition());
-			NodeBr->ID = IDBr;
-			Context.CurrentNode = nullptr;
-			Context.BranchNode = NodeBr;
-
-			Context.IndentationLevel++;
-			return &FParserState::NestedDispatcher;
-		}
-		// if current nlvl > prev nlvl, -> a new nesting fork block
-		if (Context.IndentationLevel > Context.NestStack.Last()->NestingLevel)
-		{
-			CreateAndLinkNestingBlock(Context, Parsed.ToFlagCondition());
-			Context.IndentationLevel++;
-			return &FParserState::NestedDispatcher;
-		}
-
 	}
+
+	if (Context.NestStack.IsEmpty())
+	{
+		CreateAndLinkNestingBlock(Context, Parsed.ToFlagCondition());
+		Context.IndentationLevel++;
+		return &FParserState::NestedDispatcher;
+	}
+
+
+	// if the stack is not empty we need to differentiate between a new if block at the same indent level or at a deeper level
+
+	// if current nlvl == prev nlvl, the branches belong to the same fork
+	if (Context.IndentationLevel == Context.NestStack.Last()->NestingLevel)
+	{
+		// Create a new branch in the fork node
+		FName IDBr = GenerateID(Context);
+		UDialogueBranch* NodeBr = Context.AddNodeFork<UDialogueBranch>(IDBr, FString("IFNode"), Parsed.ToFlagCondition());
+		NodeBr->ID = IDBr;
+		Context.CurrentNode = nullptr;
+		Context.BranchNode = NodeBr;
+
+		Context.IndentationLevel++;
+		return &FParserState::NestedDispatcher;
+	}
+	// if current nlvl > prev nlvl, -> a new nesting fork block
+	if (Context.IndentationLevel > Context.NestStack.Last()->NestingLevel)
+	{
+		CreateAndLinkNestingBlock(Context, Parsed.ToFlagCondition());
+		Context.IndentationLevel++;
+		return &FParserState::NestedDispatcher;
+	}
+
+
 	return &FParserState::Error;
 }
 
@@ -654,7 +665,7 @@ FParserState* FNestedDispatcherState::ProcessLine(const FString& Line, FDialogue
 	Tag = Tag.ToLower();
 	Context.ExtractedTag = Tag;
 	// We don't want to pop the last node, if Line contains an if/else since we want them to be assigned to the same fork
-	bool bPopLast = !Tag.StartsWith("if") && !Tag.StartsWith("else");	
+	bool bPopLast = !Tag.StartsWith("if") && !Tag.StartsWith("else");
 
 
 	// It's up do the dispatcher to check when we exit the nested block

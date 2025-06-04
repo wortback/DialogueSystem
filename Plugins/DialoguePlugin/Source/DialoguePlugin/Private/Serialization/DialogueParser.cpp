@@ -56,15 +56,7 @@ bool FDialogueParser::ReadFile(const FString& FilePath)
 				DLOG(Error, "Line content: %s", *Line);
 				return false;
 			}
-
 			Counter++;
-		}
-		// Check if there's a branch node hanging in the memory and not added to the asset
-		// It means that the file has ended wih the branch node
-		if (Context->BranchNode)
-		{
-			DLOG(Warning, "The file ended with a branch node. Adding it to the asset.");
-			Context->AssetBeingBuilt->DialogueMap.Add(Context->BranchNode->ID, Context->BranchNode);
 		}
 
 		Context->AssetBeingBuilt->DialogueName = FName(*FPaths::GetBaseFilename(FilePath));
@@ -142,6 +134,7 @@ bool FDialogueParser::ValidateDialogueFlow(const UDialogueDataAsset& Asset)
 	for (const auto& Pair : Asset.DialogueMap)
 	{
 		bSuccess &= CollectReferenced(Pair.Value, ReferencedBranches, Asset);
+		bSuccess &= ValidateForks(Pair.Value);
 	}
 
 	// Second pass: detect defined but never referenced branches
@@ -206,6 +199,44 @@ bool FDialogueParser::CollectReferenced(const TObjectPtr<UDialogueNodeBase>& Nod
 					ReferencedBranches.Add(Option.GotoID);
 				}
 			}
+		}
+	}
+	return bSuccess;
+}
+
+bool FDialogueParser::ValidateForks(const TObjectPtr<UDialogueNodeBase>& Node)
+{
+	bool bSuccess = true;
+	if (const UDialogueFork* Fork = Cast<UDialogueFork>(Node))
+	{
+		VLOG(Log, "Checking fork %s", *Fork->ID.ToString());
+		int32 NumEmpty = 0;
+		for (const auto& Branch : Fork->Branches)
+		{
+			if (Branch.Branch->Content.IsEmpty())
+			{
+				NumEmpty++;
+				if (!Branch.Condition.ToString().IsEmpty())
+				{
+					VLOG(Warning, "[if %s] has no body before [else]-that branch will be a no-op.",
+						*Branch.Condition.ToString());
+				}
+				else
+					VLOG(Warning, "[else] has no body.");
+			}
+			// Descend into the branch and check if there are any nested forks
+			else
+			{
+				for (const auto& NodeInBranch : Branch.Branch->Content)
+				{
+					bSuccess &= ValidateForks(NodeInBranch.Value);
+				}
+			}
+		}
+		if (NumEmpty == Fork->Branches.Num())
+		{
+			VLOG(Error, "Found an if-else block where all branches are empty!");
+			bSuccess = false;
 		}
 	}
 	return bSuccess;

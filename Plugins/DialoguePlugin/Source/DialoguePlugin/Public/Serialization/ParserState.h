@@ -11,7 +11,7 @@ struct FParsedFlag
 	FString Name;
 	EFlagCompSymbol Comp = EFlagCompSymbol::None;
 	EFlagOperator Operator = EFlagOperator::None;
-	bool bValue;
+	bool bValue = false;
 	int32 nValue = INT_MAX;
 
 	/** Convert this flag data into the condition data used in the dialogue asset */

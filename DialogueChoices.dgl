@@ -1,17 +1,12 @@
 A: "Nlvl0"
-[if LikesPizza==true]
-	A: "Nlvl1"
-	[if LikesPizza==true]
-		A: "Nlvl2"
+[if LikesPizza == true]
+	[if LikesSushi==false]
 		[choice]
-			"Option1"
+			"choice1"
+			[set LikesPizza = false]
 		[choice]
-			"Option2"
-		A: "Nlvl2"
-A: "Nlvl0.2"
-
-
-
-
-
-
+			"choice 2"
+	[else]
+		[set LikesSushi = true]
+	A: "Nlvl0"
+[else]

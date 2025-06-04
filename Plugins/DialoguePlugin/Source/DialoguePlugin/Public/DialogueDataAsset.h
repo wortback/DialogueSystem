@@ -44,6 +44,22 @@ struct FFlagCondition
 			DLOG(Log, "%s[Condition] %s %s %s", *Padding, *FlagName,
 				*FlagCompToString(ComparisonSymbol), *LexToString(BoolValue));
 	}
+
+	FString ToString() const
+	{
+		if (ComparisonSymbol == EFlagCompSymbol::None)
+		{
+			return "";
+		}
+
+		if (IntValue != INT_MAX)
+		{
+			return FString::Printf(TEXT("%s %s %d"), 
+				*FlagName, *FlagCompToString(ComparisonSymbol), IntValue);
+		}
+		return FString::Printf(TEXT("%s %s %s"), 
+			*FlagName, *FlagCompToString(ComparisonSymbol), *LexToString(BoolValue));
+	}
 };
 
 USTRUCT(BlueprintType)
