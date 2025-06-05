@@ -9,3 +9,5 @@
 
 DEFINE_LOG_CATEGORY(DialogueParsing);
 DEFINE_LOG_CATEGORY(DialogueValidation);
+
+DEFINE_LOG_CATEGORY(DialogueCondST);

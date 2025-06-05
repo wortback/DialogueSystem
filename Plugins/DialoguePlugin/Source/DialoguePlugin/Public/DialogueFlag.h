@@ -7,8 +7,6 @@
 #include "DialogueFlag.generated.h"
 
 
-#define UNDEFINT -1000000
-
 UENUM(BlueprintType)
 enum class EFlagType : uint8
 {
@@ -43,12 +41,12 @@ public:
 
 	/** If numeric, this value will be taken into account when evaluating */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 IntValue = UNDEFINT;
+	int32 IntValue = INT_MAX;
 
 public:
 	bool Validate() const
 	{
-		return (FlagType == EFlagType::Numeric && IntValue != UNDEFINT)
-		|| (FlagType == EFlagType::Boolean && IntValue == UNDEFINT);
+		return (FlagType == EFlagType::Numeric && IntValue != INT_MAX)
+		|| (FlagType == EFlagType::Boolean && IntValue == INT_MAX);
 	}
 };

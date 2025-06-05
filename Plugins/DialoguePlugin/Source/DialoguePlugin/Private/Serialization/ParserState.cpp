@@ -507,7 +507,7 @@ bool FExtractFlagsState::ParseFlagExpression(const FString& Line, FParsedFlag& O
 
 	FString Value;
 	// Look for known operators
-	for (const FString& Del : TArray<FString>{ "==", ">=", "<=", "<", ">", "=", "-", "+" })
+	for (const FString& Del : TArray<FString>{ "!=", "==", ">=", "<=", "<", ">", "=", "-", "+" })
 	{
 		if (Remainder.Split(Del, &OutFlag.Name, &Value, ESearchCase::IgnoreCase))
 		{

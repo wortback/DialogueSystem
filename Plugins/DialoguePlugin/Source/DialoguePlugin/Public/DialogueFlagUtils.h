@@ -15,6 +15,7 @@ enum class EFlagCompSymbol : uint8
 	GreaterEquals UMETA(DisplayName = "GreaterEquals"),
 	LessEquals UMETA(DisplayName = "LessEquals"),
 	Equals UMETA(DisplayName = "Equals"),
+	NotEquals UMETA(DisplayName = "NotEquals"),
 	None UMETA(DisplayName = "None")
 };
 
@@ -27,6 +28,7 @@ inline EFlagCompSymbol FlagCompFromString(const FString& Input)
 	if (Normalized == TEXT(">=")) return EFlagCompSymbol::GreaterEquals;
 	if (Normalized == TEXT("<=")) return EFlagCompSymbol::LessEquals;
 	if (Normalized == TEXT("==")) return EFlagCompSymbol::Equals;
+	if (Normalized == TEXT("!=")) return EFlagCompSymbol::NotEquals;
 
 	return EFlagCompSymbol::None;
 }
@@ -45,6 +47,8 @@ inline FString FlagCompToString(EFlagCompSymbol Symbol)
 		return TEXT("<=");
 	case EFlagCompSymbol::Equals:
 		return TEXT("==");
+	case EFlagCompSymbol::NotEquals:
+		return TEXT("!=");
 	case EFlagCompSymbol::None:
 		return TEXT("None");
 	default:
