@@ -1,13 +1,1 @@
-A: "Nlvl0"
-[if LikesPizza == true]
-	[if LikesSushi==false]
-		A: "Nlvl0"
-		[choice]
-			"choice"
-			[condition count>=10]
-	[else]
-		[set f = false]
-	A: "Nlvl0"
-[branch Realloc]
-	A: "Nlvl0"
-
+A: "Nlv#l0" #infr

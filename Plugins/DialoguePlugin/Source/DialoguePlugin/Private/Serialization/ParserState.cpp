@@ -391,22 +391,24 @@ FParserState* FDispatcherState::Dispatch(const FString& Line, FDialogueParserCon
 		return &FParserState::Error;
 	}
 
+	const FString Trimmed = TrimAfterBrackets(Line);
+
 	FString Tag;
-	if (!ExtractTag(Line, Tag)) return &FParserState::Error;
+	if (!ExtractTag(Trimmed, Tag)) return &FParserState::Error;
 	Tag = Tag.ToLower();
 
 	Context.ExtractedTag = Tag;
 
 	if (Tag.StartsWith("choice"))
-		return ChoiceState.ProcessLine(Line, Context);
+		return ChoiceState.ProcessLine(Trimmed, Context);
 	if (Tag.StartsWith("branch"))
-		return BranchState.ProcessLine(Line, Context);
+		return BranchState.ProcessLine(Trimmed, Context);
 	if (Tag.StartsWith("goto") || Tag.StartsWith("set") || Tag.StartsWith("condition"))
-		return MetaState.ProcessLine(Line, Context);
+		return MetaState.ProcessLine(Trimmed, Context);
 	if (Tag.StartsWith("if") || Tag.StartsWith("else"))
-		return ConditionalState.ProcessLine(Line, Context);
+		return ConditionalState.ProcessLine(Trimmed, Context);
 	if (Tag == "")
-		return SentenceState.ProcessLine(Line, Context);
+		return SentenceState.ProcessLine(Trimmed, Context);
 
 	return &FParserState::Error;
 }

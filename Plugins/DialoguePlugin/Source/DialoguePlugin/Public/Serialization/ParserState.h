@@ -118,6 +118,22 @@ protected:
 		return false;
 	}
 
+	FString TrimAfterBrackets(const FString& Line)
+	{
+		int32 CommentIdx;
+		int32 QuotesEIdx;
+		if (Line.FindLastChar('#', CommentIdx))
+		{
+			// if the # is found within the speaker text, ignore it
+			if (Line.FindLastChar('\"', QuotesEIdx)
+				&& CommentIdx < QuotesEIdx)
+				return Line;
+			DLOG(Error, "ret %s", *Line.Left(CommentIdx).TrimEnd());
+			return Line.Left(CommentIdx).TrimEnd();
+		}
+		return Line;
+	}
+
 	FString TrimSquareBrackets(const FString& Line)
 	{
 		FString Trimmed = Line.TrimStartAndEnd();
