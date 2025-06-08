@@ -8,13 +8,20 @@
 #include "Serialization/DialogueParserContext.h"
 
 /**
- * Main parser class that manages I/O and parsing loop
+ * Main parser class that manages I/O and parsing loop.
+ *
+ * It transitions between different states that handle parsing based on certain keywords.
+ * @see FDispatcherState
  */
 class DIALOGUEPLUGIN_API FDialogueParser
 {
+	/** The array with file lines to be parsed */
 	TArray<FString> FileLines;
 
+	/** Current state the parser is in */
 	FParserState* State;
+
+	/** The object that holds the context data (e.g. the indentation level or current nested block) */
 	FDialogueParserContext* Context;
 
 public:

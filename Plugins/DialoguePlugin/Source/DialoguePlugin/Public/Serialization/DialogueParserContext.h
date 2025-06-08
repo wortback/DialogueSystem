@@ -10,15 +10,9 @@
 
 class FParserState;
 
-enum class EContextState : uint8
-{
-	GlobalScope,     // Top-level dialogue lines
-	InChoiceBlock,   // After `[choice]`, until next non-indented line or end
-	InBranchBlock,   // Inside a [branch] block
-	InMetaBlock,	 // For custom tags to be available like [goto], [set] [condition] etc.
-};
 /**
- * Working memory: builds and tracks all UDialogueNode objects
+ * An object of this class should be passed into the parser so that it can track the indentation level
+ * and whether the parser is in nested blocks.
  */
 class DIALOGUEPLUGIN_API FDialogueParserContext
 {
@@ -59,6 +53,7 @@ private:
 	FDialogueParserContext() {}
 
 public:
+	/** Adds the node to the data asset */
 	template<typename T>
 	T* AddNode(FName ID, const FString& NodeType)
 	{
@@ -71,6 +66,7 @@ public:
 		return Node;
 	}
 
+	/** Adds the node to the current branch. */
 	template<typename T>
 	T* AddNodeBranch(FName ID, const FString& NodeType)
 	{
@@ -94,6 +90,7 @@ public:
 		return Node;
 	}
 
+	/** Adds a node to the current fork on the nest stack */
 	template<typename T>
 	T* AddNodeFork(FName ID, const FString& NodeType, const FFlagCondition& Condition)
 	{

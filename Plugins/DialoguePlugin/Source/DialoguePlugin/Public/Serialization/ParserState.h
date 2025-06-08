@@ -173,6 +173,7 @@ public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
 };
 
+/** Decides on the state for each line and delegates the parsing to this state */
 class FDispatcherState final : public FParserState
 {
 	friend class FBranchDispatcherState;

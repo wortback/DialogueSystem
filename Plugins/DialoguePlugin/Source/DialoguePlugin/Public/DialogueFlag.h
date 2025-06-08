@@ -15,7 +15,9 @@ enum class EFlagType : uint8
 };
 
 /**
- * 
+ * This class represents flags that can be used in the dialogue to track certain states.
+ * E.g. they can track player choices or relationships between the player and other characters.
+ * Flags can be boolean or numeric. 
  */
 UCLASS(NotBlueprintable)
 class DIALOGUEPLUGIN_API UDialogueFlag : public UDataAsset
@@ -44,6 +46,7 @@ public:
 	int32 IntValue = INT_MAX;
 
 public:
+	/** Validates that the flag is either boolean or numeric but never both. */
 	bool Validate() const
 	{
 		return (FlagType == EFlagType::Numeric && IntValue != INT_MAX)
