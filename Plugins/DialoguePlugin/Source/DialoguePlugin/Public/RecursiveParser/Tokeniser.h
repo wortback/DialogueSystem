@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "DialogueLogging.h"
 #include "CoreMinimal.h"
 
 
@@ -45,9 +46,16 @@ static void TokeniseCondition(const FString& Input, TArray<FCondToken>& OutToken
 		}
 
 		// check brackets
-		if (Input[i] == TEXT('(') || Input[i] == TEXT(')'))
+		if (Input[i] == TEXT('('))
 		{
 			OutTokens.Add({ ECondTokenType::LParen, Input.Mid(i, 1) });
+			i++;
+			continue;
+		}
+
+		if (Input[i] == TEXT(')'))
+		{
+			OutTokens.Add({ ECondTokenType::RParen, Input.Mid(i, 1) });
 			i++;
 			continue;
 		}
@@ -127,4 +135,54 @@ static void TokeniseCondition(const FString& Input, TArray<FCondToken>& OutToken
 	}
 
 	OutTokens.Add({ ECondTokenType::EndOfInput, TEXT("") });
+}
+
+static void PrintDebugTokens(const TArray<FCondToken>& Tokens)
+{
+	UE_LOG(LogTemp, Log, TEXT("---- Debug: Condition Tokens ----"));
+	for (int32 Index = 0; Index < Tokens.Num(); ++Index)
+	{
+		const FCondToken& Token = Tokens[Index];
+
+		FString TokenTypeStr;
+		switch (Token.Type)
+		{
+		case ECondTokenType::Identifier:
+			TokenTypeStr = TEXT("Identifier");
+			break;
+		case ECondTokenType::NumberLiteral:
+			TokenTypeStr = TEXT("NumberLiteral");
+			break;
+		case ECondTokenType::BoolLiteral:
+			TokenTypeStr = TEXT("BoolLiteral");
+			break;
+		case ECondTokenType::CompSymbol:
+			TokenTypeStr = TEXT("CompSymbol");
+			break;
+		case ECondTokenType::AndOp:
+			TokenTypeStr = TEXT("AndOp");
+			break;
+		case ECondTokenType::OrOp:
+			TokenTypeStr = TEXT("OrOp");
+			break;
+		case ECondTokenType::LParen:
+			TokenTypeStr = TEXT("LParen");
+			break;
+		case ECondTokenType::RParen:
+			TokenTypeStr = TEXT("RParen");
+			break;
+		case ECondTokenType::EndOfInput:
+			TokenTypeStr = TEXT("EndOfInput");
+			break;
+		case ECondTokenType::Invalid:
+			TokenTypeStr = TEXT("Invalid");
+			break;
+		default:
+			TokenTypeStr = TEXT("Unknown");
+			break;
+		}
+
+		DLOG(Log, "[%d] Type: %s, Text: '%s'", Index, *TokenTypeStr, *Token.Text);
+	}
+	DLOG(Log, "----------------------------------");
 }

@@ -92,7 +92,7 @@ public:
 
 	/** Adds a node to the current fork on the nest stack */
 	template<typename T>
-	T* AddNodeFork(FName ID, const FString& NodeType, const FFlagCondition& Condition)
+	T* AddNodeFork(FName ID, const FString& NodeType, const FFlagCondition& Condition, UCondTreeWrapper& Tree)
 	{
 		if (NestStack.IsEmpty())
 		{
@@ -106,7 +106,12 @@ public:
 		T* Node = NewObject<T>(AssetBeingBuilt, *NodeName);
 		Node->SetFlags(RF_Public | RF_Transactional);
 
-		NestStack.Last()->Branches.Add(FBranchWithCondition(Condition, Node));
+		FBranchWithCondition Cond;
+		Cond.Condition = Condition;
+		Cond.TreeWrapper = &Tree;
+		Cond.Branch = Node;
+
+		NestStack.Last()->Branches.Add(Cond);
 		return Node;
 	}
 

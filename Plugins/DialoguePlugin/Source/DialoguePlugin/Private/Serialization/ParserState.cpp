@@ -6,6 +6,8 @@
 #include <DialogueLogging.h>
 
 #include "DialogueDataAsset.h"
+#include "RecursiveParser/CondParser.h"
+#include "RecursiveParser/CondSyntaxTree.h"
 #include "Serialization/DialogueParserContext.h"
 
 
@@ -577,6 +579,33 @@ bool FExtractFlagsState::ParseFlagExpression(const FString& Line, FParsedFlag& O
 	return true;
 }
 
+bool FExtractFlagsState::ParseFlagCondition(const FString& Line, UCondTreeWrapper& Tree)
+{
+	FString Trimmed = TrimSquareBrackets(Line);
+
+	FString Remainder;
+	if (!Trimmed.Split(" ", nullptr, &Remainder, ESearchCase::IgnoreCase))
+	{
+		DLOG(Error, "Missing a space between keyword and flag expression in %s", *Line);
+		return false;
+	}
+
+	Tree.SetFlags(RF_Public | RF_Transactional);
+	TArray<FCondToken> OutTokens;
+	TokeniseCondition(Remainder, OutTokens);
+	PrintDebugTokens(OutTokens);
+	FCondParser CondParser(OutTokens);
+	TUniquePtr<ICondNode> Root = CondParser.Parse();
+	if (Root.IsValid())
+	{
+		DLOG(Log, "Successfully parsed the conditional tree!");
+		Tree.Init(MoveTemp(Root));
+		return true;
+	}
+	DLOG(Error, "Failed to parse the conditional tree!", *Line);
+	return false;
+}
+
 FParserState* FForkState::ProcessLine(const FString& Line, FDialogueParserContext& Context)
 {
 	// check if that 'else' is not standalone
@@ -589,15 +618,21 @@ FParserState* FForkState::ProcessLine(const FString& Line, FDialogueParserContex
 
 	// only parse the flag for an if
 	FParsedFlag Parsed;
+	UCondTreeWrapper* CondTree =
+		NewObject<UCondTreeWrapper>(Context.AssetBeingBuilt, UCondTreeWrapper::StaticClass());
+
 	if (Context.ExtractedTag.StartsWith("if"))
 	{
-		if (!ExtractFlagsState.ParseFlagExpression(Line, Parsed))
+		// 		if (!ExtractFlagsState.ParseFlagExpression(Line, Parsed))
+		// 			return &FParserState::Error;
+
+		if (!ExtractFlagsState.ParseFlagCondition(Line, *CondTree))
 			return &FParserState::Error;
 	}
 
 	if (Context.NestStack.IsEmpty())
 	{
-		CreateAndLinkNestingBlock(Context, Parsed.ToFlagCondition());
+		CreateAndLinkNestingBlock(Context, Parsed.ToFlagCondition(), *CondTree);
 		Context.IndentationLevel++;
 		return &FParserState::Dispatcher;
 	}
@@ -610,7 +645,9 @@ FParserState* FForkState::ProcessLine(const FString& Line, FDialogueParserContex
 	{
 		// Create a new branch in the fork node
 		FName IDBr = GenerateID(Context);
-		UDialogueBranch* NodeBr = Context.AddNodeFork<UDialogueBranch>(IDBr, FString("IFNode"), Parsed.ToFlagCondition());
+		UDialogueBranch* NodeBr = Context.AddNodeFork<UDialogueBranch>(IDBr,
+			FString("IFNode"), Parsed.ToFlagCondition(), *CondTree);
+
 		NodeBr->ID = IDBr;
 		Context.CurrentNode = nullptr;
 		Context.BranchNode = NodeBr;
@@ -621,7 +658,7 @@ FParserState* FForkState::ProcessLine(const FString& Line, FDialogueParserContex
 	// if current nlvl > prev nlvl, -> a new nesting fork block
 	if (Context.IndentationLevel > Context.NestStack.Last()->NestingLevel)
 	{
-		CreateAndLinkNestingBlock(Context, Parsed.ToFlagCondition());
+		CreateAndLinkNestingBlock(Context, Parsed.ToFlagCondition(), *CondTree);
 		Context.IndentationLevel++;
 		return &FParserState::Dispatcher;
 	}
@@ -630,7 +667,7 @@ FParserState* FForkState::ProcessLine(const FString& Line, FDialogueParserContex
 	return &FParserState::Error;
 }
 
-void FForkState::CreateAndLinkNestingBlock(FDialogueParserContext& Context, const FFlagCondition& Condition)
+void FForkState::CreateAndLinkNestingBlock(FDialogueParserContext& Context, const FFlagCondition& Condition, UCondTreeWrapper& Tree)
 {
 	// Create a fork and push to the stack
 	FName ID = GenerateID(Context);
@@ -647,7 +684,8 @@ void FForkState::CreateAndLinkNestingBlock(FDialogueParserContext& Context, cons
 
 	// Create a branch with the parsed condition and add to the curr fork node
 	FName IDBr = GenerateID(Context);
-	UDialogueBranch* NodeBr = Context.AddNodeFork<UDialogueBranch>(IDBr, FString("IFNode"), Condition);
+	UDialogueBranch* NodeBr = Context.AddNodeFork<UDialogueBranch>(IDBr, FString("IFNode"), Condition,
+		Tree);
 	NodeBr->ID = IDBr;
 
 	// Link the node before the fork to the fork node

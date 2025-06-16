@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "DialogueDataAsset.h"
 #include "DialogueLogging.h"
+#include "CondSyntaxTree.generated.h"
 
 
 /** Represents the logical operators && and || in the syntax tree */
@@ -78,4 +79,24 @@ struct FBinaryCondNode : public ICondNode
 		}
 		return false;
 	}
+};
+
+UCLASS(BlueprintType)
+class UCondTreeWrapper : public UObject
+{
+    GENERATED_BODY()
+
+public:
+    /** Pointer to the root of the C++ tree (not exposed to BP) */
+    TUniquePtr<ICondNode> InternalNode;
+
+    void Init(TUniquePtr<ICondNode> InNode)
+    {
+        InternalNode = MoveTemp(InNode);
+    }
+
+    bool Evaluate(const TMap<FName, int32>& IntFlags, const TMap<FName, bool>& BoolFlags) const
+    {
+        return InternalNode ? InternalNode->Evaluate(IntFlags, BoolFlags) : false;
+    }
 };

@@ -262,6 +262,8 @@ private:
 	bool ParseFlagName(const FString& Line, FString& FlagName);
 
 	bool ParseFlagExpression(const FString& Line, FParsedFlag& OutFlag);
+
+	bool ParseFlagCondition(const FString& Line, UCondTreeWrapper& Tree);
 };
 
 class FForkState final : public FParserState {
@@ -269,5 +271,5 @@ class FForkState final : public FParserState {
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
 
-	void CreateAndLinkNestingBlock(FDialogueParserContext& Context, const FFlagCondition& Condition);
+	void CreateAndLinkNestingBlock(FDialogueParserContext& Context, const FFlagCondition& Condition, UCondTreeWrapper& Tree);
 };

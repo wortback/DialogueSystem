@@ -1,1 +1,4 @@
 A: "Nlv#l0" #infr
+[if LikesPizza==true]
+    A: "Hello!"
+A: "Hello!"

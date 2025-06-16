@@ -261,6 +261,10 @@ struct FDialogueChoiceOption
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Choice Option")
 	TArray<FFlagCondition> Conditions;
 
+	/** Tree object for complex conditions */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+    class UCondTreeWrapper* TreeWrapper = nullptr;
+
 	/** opt. Jumps to the ID is this choice is selected */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Choice Option")
 	FName GotoID;
@@ -336,10 +340,18 @@ struct FBranchWithCondition
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FFlagCondition Condition;
 
+	/** Tree object for complex conditions */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+    UCondTreeWrapper* TreeWrapper = nullptr;
+
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Dialogue")
 	UDialogueBranch* Branch = nullptr;
 };
 
+/** * A node that contains multiple if/else-branches, each with its own condition.
+ * The conditions are evaluated in order, and the first one that matches is executed.
+ * If no conditions match, the last branch (if any) is executed as an "else" case.
+ */
 UCLASS(Blueprintable)
 class UDialogueFork : public UDialogueNodeLinkable
 {
