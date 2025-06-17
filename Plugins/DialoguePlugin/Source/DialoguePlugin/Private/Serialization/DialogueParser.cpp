@@ -216,13 +216,13 @@ bool FDialogueParser::ValidateForks(const TObjectPtr<UDialogueNodeBase>& Node)
 			if (Branch.Branch->Content.IsEmpty())
 			{
 				NumEmpty++;
-				if (!Branch.Condition.ToString().IsEmpty())
-				{
-					VLOG(Warning, "[if %s] has no body before [else]-that branch will be a no-op.",
-						*Branch.Condition.ToString());
-				}
-				else
-					VLOG(Warning, "[else] has no body.");
+// 				if (!Branch.Condition.ToString().IsEmpty())
+// 				{
+// 					VLOG(Warning, "[if %s] has no body before [else]-that branch will be a no-op.",
+// 						*Branch.Condition.ToString());
+// 				}
+// 				else
+// 					VLOG(Warning, "[else] has no body.");
 			}
 			// Descend into the branch and check if there are any nested forks
 			else

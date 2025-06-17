@@ -257,10 +257,6 @@ struct FDialogueChoiceOption
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Choice Option")
 	TArray<FFlagEffect> AffectedFlags;
 
-	/** Required conditions for this response to be available */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Choice Option")
-	TArray<FFlagCondition> Conditions;
-
 	/** Tree object for complex conditions */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
     class UCondTreeWrapper* TreeWrapper = nullptr;
@@ -283,11 +279,6 @@ struct FDialogueChoiceOption
 		}
 		else
 			DLOG(Log, "%s[Option] %s", *Padding, *Text);
-
-		for (const auto& Cond : Conditions)
-		{
-			Cond.LogCondition(Indent+1);
-		}
 
 		for (const auto& Effect : AffectedFlags)
 		{
@@ -319,11 +310,7 @@ public:
 			{
 				DLOG(Log, "%s[Choice] \"%s\"", *Pad, *Opt.Text);
 			}
-			// Then indent and log any conditions or flag effects under this choice:
-			for (const auto& Cond : Opt.Conditions)
-			{
-				Cond.LogCondition(Indent + 2);
-			}
+
 			for (const auto& Eff : Opt.AffectedFlags)
 			{
 				Eff.LogEffect(Indent + 2);
@@ -336,9 +323,6 @@ USTRUCT(BlueprintType)
 struct FBranchWithCondition
 {
 	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	FFlagCondition Condition;
 
 	/** Tree object for complex conditions */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
@@ -372,15 +356,6 @@ public:
 		{
 			const auto& B = Branches[i];
 			const FString BranchPad = FString::ChrN(Indent + 2, ' ');
-			// Show which branch index it is and its condition
-			if (B.Condition.ComparisonSymbol != EFlagCompSymbol::None)
-			{
-				DLOG(Log, "%sif %s:", *BranchPad, *B.Condition.ToString());
-			}
-			else
-			{
-				DLOG(Log, "%selse:", *BranchPad);
-			}
 
 			// Recurse into that branch's content
 			if (B.Branch)

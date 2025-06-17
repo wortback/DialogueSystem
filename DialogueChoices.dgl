@@ -1,9 +1,8 @@
 A: "Hello"
-[choice]
-    "Choice1"
-    [condition LikesSushi == true || LikesPizza != false && (Rusty > 10)]
-[choice]
-    "Choice1"
+[if LikesPizza == true]
+    A: "Hello"
+[else]
+    B: "Sye sye"
 
 #[if LikesPizza==true]
 #    A: "Hello!"

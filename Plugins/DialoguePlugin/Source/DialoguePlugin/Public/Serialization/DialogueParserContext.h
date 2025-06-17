@@ -92,7 +92,7 @@ public:
 
 	/** Adds a node to the current fork on the nest stack */
 	template<typename T>
-	T* AddNodeFork(FName ID, const FString& NodeType, const FFlagCondition& Condition, UCondTreeWrapper& Tree)
+	T* AddNodeFork(FName ID, const FString& NodeType, UCondTreeWrapper* Tree)
 	{
 		if (NestStack.IsEmpty())
 		{
@@ -107,8 +107,7 @@ public:
 		Node->SetFlags(RF_Public | RF_Transactional);
 
 		FBranchWithCondition Cond;
-		Cond.Condition = Condition;
-		Cond.TreeWrapper = &Tree;
+		Cond.TreeWrapper = Tree;
 		Cond.Branch = Node;
 
 		NestStack.Last()->Branches.Add(Cond);
@@ -156,7 +155,5 @@ inline int32 GetIndentLevel(const FString& Line)
 			break;
 		}
 	}
-	DLOG(Warning, "Space count: %d", SpaceCount);
-	DLOG(Warning, "Indent count: %d", IndentLevel);
 	return IndentLevel;
 }
