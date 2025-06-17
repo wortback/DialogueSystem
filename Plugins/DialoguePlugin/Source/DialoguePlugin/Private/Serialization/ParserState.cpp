@@ -189,19 +189,27 @@ FParserState* FChoiceMetaState::ProcessLine(const FString& Line, FDialogueParser
 
 		if (Line.Contains("condition"))
 		{
-			FParsedFlag Parsed;
-			if (!ExtractFlagsState.ParseFlagExpression(Line, Parsed))
+			//FParsedFlag Parsed;
+
+			UCondTreeWrapper* CondTree =
+				NewObject<UCondTreeWrapper>(Context.AssetBeingBuilt, UCondTreeWrapper::StaticClass());
+
+			if (!ExtractFlagsState.ParseFlagCondition(Line, *CondTree))
 				return &FParserState::Error;
 
+// 			if (!ExtractFlagsState.ParseFlagExpression(Line, Parsed))
+// 				return &FParserState::Error;
+
 			// condition doesn't allow comparison symbols
-			if (Parsed.Operator != EFlagOperator::None)
-			{
-				DLOG(Error, "You cannot use assignment operators (i.e. =, +, -) with 'condition' keyword!");
-				DLOG(Error, "Please use comparison symbols instead (i.e. ==, >, <=, etc)!");
-				return &FParserState::Error;
-			}
+// 			if (Parsed.Operator != EFlagOperator::None)
+// 			{
+// 				DLOG(Error, "You cannot use assignment operators (i.e. =, +, -) with 'condition' keyword!");
+// 				DLOG(Error, "Please use comparison symbols instead (i.e. ==, >, <=, etc)!");
+// 				return &FParserState::Error;
+// 			}
 			// Update the choice option with the parsed data
-			Choice->Options.Last().Conditions.Add(Parsed.ToFlagCondition());
+			/*Choice->Options.Last().Conditions.Add(Parsed.ToFlagCondition());*/
+			Choice->Options.Last().TreeWrapper = CondTree;
 		}
 
 		if (Line.Contains("set"))
@@ -582,7 +590,6 @@ bool FExtractFlagsState::ParseFlagExpression(const FString& Line, FParsedFlag& O
 bool FExtractFlagsState::ParseFlagCondition(const FString& Line, UCondTreeWrapper& Tree)
 {
 	FString Trimmed = TrimSquareBrackets(Line);
-
 	FString Remainder;
 	if (!Trimmed.Split(" ", nullptr, &Remainder, ESearchCase::IgnoreCase))
 	{

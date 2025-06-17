@@ -132,11 +132,31 @@ public:
 
 inline int32 GetIndentLevel(const FString& Line)
 {
-	int32 Count = 0;
+	int32 IndentLevel = 0;
+	int32 SpaceCount = 0;
+
 	for (TCHAR C : Line)
 	{
-		if (C == '\t') Count++;
-		else break;
+		if (C == '\t')
+		{
+			IndentLevel++;
+		}
+		else if (C == ' ')
+		{
+			SpaceCount++;
+			// Assuming that one tab equals 4 spaces
+			if (SpaceCount == 4)
+			{
+				IndentLevel++;
+				SpaceCount = 0;
+			}
+		}
+		else
+		{
+			break;
+		}
 	}
-	return Count;
+	DLOG(Warning, "Space count: %d", SpaceCount);
+	DLOG(Warning, "Indent count: %d", IndentLevel);
+	return IndentLevel;
 }

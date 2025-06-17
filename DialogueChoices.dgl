@@ -1,4 +1,10 @@
-A: "Nlv#l0" #infr
-[if LikesPizza==true]
-    A: "Hello!"
-A: "Hello!"
+A: "Hello"
+[choice]
+    "Choice1"
+    [condition LikesSushi == true || LikesPizza != false && (Rusty > 10)]
+[choice]
+    "Choice1"
+
+#[if LikesPizza==true]
+#    A: "Hello!"
+#A: "Hello!"
