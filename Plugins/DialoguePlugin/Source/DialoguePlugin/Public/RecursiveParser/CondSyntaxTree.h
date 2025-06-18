@@ -90,6 +90,9 @@ public:
     /** Pointer to the root of the C++ tree (not exposed to BP) */
     TUniquePtr<ICondNode> InternalNode;
 
+	/** String representation of the condition as written in .dgl file. Used for debugging. */
+	FString CondString;
+
     void Init(TUniquePtr<ICondNode> InNode)
     {
         InternalNode = MoveTemp(InNode);

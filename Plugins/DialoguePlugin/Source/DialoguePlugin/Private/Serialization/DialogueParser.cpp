@@ -3,6 +3,7 @@
 
 #include "Serialization/DialogueParser.h"
 #include "Serialization/ParserState.h"
+#include "RecursiveParser/CondSyntaxTree.h"
 
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
@@ -173,8 +174,9 @@ bool FDialogueParser::CollectReferenced(const TObjectPtr<UDialogueNodeBase>& Nod
 		{
 			ReferencedBranches.Add(GotoNode->GotoID);
 		}
-
 	}
+
+	// if the curr node is a branch, we descend into it and collect all referenced branches
 	if (const UDialogueBranch* Branch = Cast<UDialogueBranch>(Node))
 	{
 		for (const auto& NodeInBranch : Branch->Content)
@@ -182,6 +184,7 @@ bool FDialogueParser::CollectReferenced(const TObjectPtr<UDialogueNodeBase>& Nod
 			bSuccess &= CollectReferenced(NodeInBranch.Value, ReferencedBranches, Asset);
 		}
 	}
+	// if the curr node is a choice, we check all options and collect referenced branches
 	else if (const UDialogueChoice* Choice = Cast<UDialogueChoice>(Node))
 	{
 		for (const auto& Option : Choice->Options)
@@ -201,6 +204,20 @@ bool FDialogueParser::CollectReferenced(const TObjectPtr<UDialogueNodeBase>& Nod
 			}
 		}
 	}
+	// if the curr node is a fork, we descend into it and look for referenced branches
+	else if (const UDialogueFork* Fork = Cast<UDialogueFork>(Node))
+	{
+		for (const auto& ForkBranch : Fork->Branches)
+		{
+			if (ForkBranch.Branch)
+			{
+				for (const auto& NodeInBranch : ForkBranch.Branch->Content)
+				{
+					bSuccess &= CollectReferenced(NodeInBranch.Value, ReferencedBranches, Asset);
+				}
+			}
+		}
+	}
 	return bSuccess;
 }
 
@@ -216,13 +233,13 @@ bool FDialogueParser::ValidateForks(const TObjectPtr<UDialogueNodeBase>& Node)
 			if (Branch.Branch->Content.IsEmpty())
 			{
 				NumEmpty++;
-// 				if (!Branch.Condition.ToString().IsEmpty())
-// 				{
-// 					VLOG(Warning, "[if %s] has no body before [else]-that branch will be a no-op.",
-// 						*Branch.Condition.ToString());
-// 				}
-// 				else
-// 					VLOG(Warning, "[else] has no body.");
+				if (Branch.TreeWrapper)
+				{
+					VLOG(Warning, "%s has no body before [else]-that branch will be a no-op.", 
+						*Branch.TreeWrapper->CondString);
+				}
+				else
+					VLOG(Warning, "[else] has no body.");
 			}
 			// Descend into the branch and check if there are any nested forks
 			else

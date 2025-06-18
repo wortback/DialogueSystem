@@ -191,6 +191,7 @@ FParserState* FChoiceMetaState::ProcessLine(const FString& Line, FDialogueParser
 		{
 			UCondTreeWrapper* CondTree =
 				NewObject<UCondTreeWrapper>(Context.AssetBeingBuilt, UCondTreeWrapper::StaticClass());
+			CondTree->CondString = Line;
 
 			if (!ExtractFlagsState.ParseFlagCondition(Line, CondTree))
 				return &FParserState::Error;
@@ -612,6 +613,7 @@ FParserState* FForkState::ProcessLine(const FString& Line, FDialogueParserContex
 	if (Context.ExtractedTag.StartsWith("if"))
 	{
 		CondTree = NewObject<UCondTreeWrapper>(Context.AssetBeingBuilt, UCondTreeWrapper::StaticClass());
+		CondTree->CondString = Line;
 		if (!ExtractFlagsState.ParseFlagCondition(Line, CondTree))
 			return &FParserState::Error;
 	}

@@ -1,8 +1,12 @@
 A: "Hello"
 [if LikesPizza == true]
-    A: "Hello"
 [else]
     B: "Sye sye"
+    [goto Sun]
+[choice]
+    "Hello"
+    [condition LikesPizza == true]
+    [goto drums]
 
 #[if LikesPizza==true]
 #    A: "Hello!"
