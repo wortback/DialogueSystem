@@ -16,7 +16,7 @@ You can preview the syntax in the [DiaLogUE Syntax Examples](DiaLogUE_Syntax_Exa
 1. **Write** your dialogue in `.dgl` files using the DiaLogUE language.
 2. **Parse** these files with the DiaLogUE Unreal plugin into Unreal Engine data assets.
 3. **Consume** these assets at runtime in your game.  
-   The plugin is designed so lookups are performed in effective **O(1) fashion**—fast enough for even the most dynamic branching systems.
+   The plugin is designed so that lookups are performed in the effective **O(1) fashion**—fast enough for even the most dynamic branching systems.
 
 ## Key Features
 
@@ -34,8 +34,6 @@ After installing the extension, you can preview the highlighting here [DiaLogUE 
 
 ## Roadmap
 
-- **In Progress:**  
-  - Support for `[if]` blocks with multiple expressions (e.g. `[if expr && expr]`)
 - **Coming Soon:**  
   - Full runtime system for consuming data assets in Unreal Engine
   - Example UI implementation to show how dialogues can be played in-game
