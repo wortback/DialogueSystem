@@ -73,4 +73,29 @@ private:
 	 *  @return true if all forks have at least one branch that is not empty
 	 */
 	bool ValidateForks(const TObjectPtr<UDialogueNodeBase>& Node);
+
+	/**
+	 *	This method checks for shallow infinite loops that occur
+	 *	when branches that contain goto reference each other.
+	 *	E.g. {branchA: goto B} {branchB: goto C} {branchC: goto A}
+	 *	A -> B -> C -> A
+	 *	
+	 *  @return true if the asset has shallow infinite loops 
+	 */
+	bool HasShallowCycles(const UDialogueDataAsset& Asset, TArray<FString>& Cycles);
+
+	/** Depth first search for branches. Checks cycles created by goto nodes */
+	void BranchGotoDFS(TTuple<FName, FName> Current, TMap<FName, TTuple<bool, FName>>& Branches,
+		TArray<FString>& Cycles, TArray<FName>& Path);
+
+	FString CycleToString(const TArray<FName>& Path);
+
+	/*
+	bool HasUnmarkedCycles(const UDialogueDataAsset& Asset, TArray<FString>& Cycles);
+
+	bool DFS(FName Current, const UDialogueDataAsset& Asset, TSet<FName>& Visited, 
+		TSet<FName>& RecStack, TArray<FString>& Cycles, FString& CycleStr);
+
+	TArray<FName> GetOutgoingNodes(FName Current, const UDialogueDataAsset& Asset);
+	*/
 };

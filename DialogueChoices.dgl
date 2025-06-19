@@ -1,13 +1,15 @@
 A: "Hello"
-[if LikesPizza == true]
-[else]
-    B: "Sye sye"
-    [goto Sun]
-[choice]
-    "Hello"
-    [condition LikesPizza == true]
-    [goto drums]
-
-#[if LikesPizza==true]
-#    A: "Hello!"
-#A: "Hello!"
+[branch A]
+    A: "Hello from the Sun!"
+    [goto B]
+[branch B]
+    A: "Hello from the Sun!"
+    [goto D]
+[branch C]
+    A: "Hello from the Sun!"
+    [goto C]
+[branch D]
+    A: "Hello from the Sun!"
+    [goto A]
+[branch E]
+    A: "Hello from the Sun!"

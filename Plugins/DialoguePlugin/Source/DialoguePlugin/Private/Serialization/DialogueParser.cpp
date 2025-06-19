@@ -34,6 +34,20 @@ bool FDialogueParser::ParseFile(const FString& FilePath, UDialogueDataAsset& Out
 	// Validation for the dialogue flow: check unreachable nodes and infinite loops
 	ValidateDialogueFlow(OutAsset);
 
+	TArray<FString> Cycles;
+	if (HasShallowCycles(OutAsset, Cycles))
+	{
+		DLOG(Warning, "Has found shallow cycles in the dialogue!");
+		for (const auto& Cycle : Cycles)
+		{
+			DLOG(Log, "%s", *Cycle);
+		}
+	}
+	else
+	{
+		DLOG(Warning, "No shallow cycles found in the dialogue!");
+	}
+
 	return bSuccess;
 }
 
@@ -162,17 +176,17 @@ bool FDialogueParser::CollectReferenced(const TObjectPtr<UDialogueNodeBase>& Nod
 	bool bSuccess = true;
 	if (const UDialogueGotoNode* GotoNode = Cast<UDialogueGotoNode>(Node))
 	{
-		VLOG(Log, "Checking goto name %s", *GotoNode->GotoID.ToString());
+		//VLOG(Log, "Checking goto name %s", *GotoNode->NextID.ToString());
 
-		if (!Asset.DialogueMap.Contains(GotoNode->GotoID))
+		if (!Asset.DialogueMap.Contains(GotoNode->NextID))
 		{
 			VLOG(Error, "Branch %s is referenced in %s but does not exist!",
-				*GotoNode->GotoID.ToString(), *GotoNode->ID.ToString());
+				*GotoNode->NextID.ToString(), *GotoNode->ID.ToString());
 			bSuccess = false;
 		}
 		else
 		{
-			ReferencedBranches.Add(GotoNode->GotoID);
+			ReferencedBranches.Add(GotoNode->NextID);
 		}
 	}
 
@@ -193,8 +207,8 @@ bool FDialogueParser::CollectReferenced(const TObjectPtr<UDialogueNodeBase>& Nod
 			{
 				if (!Asset.DialogueMap.Contains(Option.GotoID))
 				{
-					VLOG(Error, "Choice option references missing branch %s!",
-						*Option.GotoID.ToString());
+					VLOG(Error, "Branch %s is referenced in %s but does not exist!",
+						*Option.GotoID.ToString(), *Choice->ID.ToString());
 					bSuccess = false;
 				}
 				else
@@ -235,7 +249,7 @@ bool FDialogueParser::ValidateForks(const TObjectPtr<UDialogueNodeBase>& Node)
 				NumEmpty++;
 				if (Branch.TreeWrapper)
 				{
-					VLOG(Warning, "%s has no body before [else]-that branch will be a no-op.", 
+					VLOG(Warning, "%s has no body before [else]-that branch will be a no-op.",
 						*Branch.TreeWrapper->CondString);
 				}
 				else
@@ -258,3 +272,182 @@ bool FDialogueParser::ValidateForks(const TObjectPtr<UDialogueNodeBase>& Node)
 	}
 	return bSuccess;
 }
+
+bool FDialogueParser::HasShallowCycles(const UDialogueDataAsset& Asset, TArray<FString>& Cycles)
+{
+	// {Branch: {bIsVisited, GotoID}}
+	TMap<FName, TTuple<bool, FName>> BranchesGotos;
+	TArray<FName> Path;
+
+	for (const auto& Pair : Asset.DialogueMap)
+	{
+		if (UDialogueBranch* Branch = Cast<UDialogueBranch>(Pair.Value); Branch)
+		{
+			FName GotoID;
+			for (const auto& BranchPair : Branch->Content)
+			{
+				if (UDialogueGotoNode* Goto = Cast<UDialogueGotoNode>(BranchPair.Value); Goto)
+				{
+					GotoID = Goto->NextID;
+					break;
+				}
+			}
+			BranchesGotos.Add({ Branch->ID, TTuple<bool, FName>(false, GotoID) });
+		}
+	}
+
+	for (const auto& Node : BranchesGotos)
+	{
+		if (!Node.Value.Key)
+		{
+			BranchGotoDFS({Node.Key, Node.Value.Value}, BranchesGotos, Cycles, Path);
+		}
+	}
+
+	return !Cycles.IsEmpty();
+}
+
+void FDialogueParser::BranchGotoDFS(TTuple<FName, FName> Current, TMap<FName, TTuple<bool, FName>>& Branches,
+	TArray<FString>& Cycles, TArray<FName>& Path)
+{
+	const FName& CurrentID = Current.Key;
+	const FName& NextID = Current.Value;
+
+	if (NextID.IsNone())
+		return;
+
+	if (Path.Contains(CurrentID))
+	{
+		Cycles.Add(CycleToString(Path));
+		return;
+	}
+
+	TTuple<bool, FName>* CurrentBGPair = Branches.Find(CurrentID);
+	TTuple<bool, FName>* NextBGPair = Branches.Find(NextID);
+
+	if (!NextBGPair)
+	{
+		VLOG(Error, "Branch %s doesn't exist!", *NextID.ToString());
+		return;
+	}
+
+	Path.Add(CurrentID);
+	if (CurrentBGPair)
+		CurrentBGPair->Key = true;
+
+	BranchGotoDFS({ NextID, NextBGPair->Value }, Branches, Cycles, Path);
+	Path.Pop();
+}
+
+FString FDialogueParser::CycleToString(const TArray<FName>& Path)
+{
+	FString Res = FString::JoinBy(Path, TEXT(" -> "), [](const FName& Node)
+		{
+			return Node.ToString();
+		});
+	Res += TEXT(" -> ");
+	Res += Path[0].ToString();
+	return Res;
+}
+
+// Infinite loop check
+// Decided to postpone it because the language may change.
+// For now only a shallow check is implemented (e.g. goto branch A -> goto branch B -> goto branch A)
+/*
+bool FDialogueParser::HasUnmarkedCycles(const UDialogueDataAsset& Asset, TArray<FString>& Cycles)
+{
+	TSet<FName> Visited, RecStack;
+	// Will hold nodes that are part of the cycle (Node1 -> Node2 -> ... -> Node1)
+	FString CycleStr;
+
+	for (const auto& Pair : Asset.DialogueMap)
+	{
+		if (Pair.Value->IsA(UDialogueSentence::StaticClass()))
+			continue; // Skip sentence nodes, they are not part of the cycle
+
+		FName Start = Pair.Key;
+		if (!Visited.Contains(Start) && DFS(Start, Asset, Visited, RecStack, Cycles, CycleStr))
+			return true;
+	}
+	return false;
+}
+
+bool FDialogueParser::DFS(FName Current, const UDialogueDataAsset& Asset, TSet<FName>& Visited,
+	TSet<FName>& RecStack, TArray<FString>& Cycles, FString& CycleStr)
+{
+	Visited.Add(Current);
+	RecStack.Add(Current);
+	CycleStr += Current.ToString() + " -> ";
+
+	for (FName NextID : GetOutgoingNodes(Current, Asset))
+	{
+		if (RecStack.Contains(NextID))
+		{
+			Cycles.Add(CycleStr);
+			return true;
+		}
+
+		if (!Visited.Contains(NextID) && DFS(NextID, Asset, Visited, RecStack, Cycles, CycleStr))
+			return true;
+	}
+
+	RecStack.Remove(Current);
+	return false;
+}
+
+TArray<FName> FDialogueParser::GetOutgoingNodes(FName Current, const UDialogueDataAsset& Asset)
+{
+	TArray<FName> Res;
+	// Check if the node is a choice node and choice options have gotos
+	if (Current.IsNone()) return Res;
+
+	if (const UDialogueChoice* Node = Cast<UDialogueChoice>(Asset.DialogueMap[Current]); Node)
+	{
+		for (const auto& Option: Node->Options)
+		{
+			if (!Option.GotoID.IsNone())
+			{
+				Res.Add(Option.GotoID);
+			}
+		}
+		return Res;
+	}
+
+	// Check if the node is a branch and recurse into it
+	if (const UDialogueBranch* Node = Cast<UDialogueBranch>(Asset.DialogueMap[Current]); Node)
+	{
+		for (const auto& Pair : Node->Content)
+		{
+			if (Pair.Value->IsA(UDialogueGotoNode::StaticClass()))
+			{
+				Res.Add(Pair.Key);
+			}
+		}
+		return Res;
+	}
+
+	// Check if the node is a fork and recurse into its branches
+	if (const UDialogueFork* Node = Cast<UDialogueFork>(Asset.DialogueMap[Current]); Node)
+	{
+		for (const auto& Branch : Node->Branches)
+		{
+			for (const auto& Pair : Branch.Branch->Content)
+			{
+				if (Pair.Value->IsA(UDialogueGotoNode::StaticClass()))
+				{
+					Res.Add(Pair.Key);
+				}
+			}
+		}
+		return Res;
+	}
+
+	// Check if the node is linkable and has NextID
+	if (const UDialogueNodeLinkable* Node = Cast<UDialogueNodeLinkable>(Asset.DialogueMap[Current]); Node)
+	{
+		Res.Add(Node->NextID);
+		return Res;
+	}
+	return Res;
+}
+*/

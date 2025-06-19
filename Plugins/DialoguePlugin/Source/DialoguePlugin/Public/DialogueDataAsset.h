@@ -159,13 +159,10 @@ class UDialogueGotoNode : public UDialogueNodeLinkable
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	FName GotoID;
-
 	virtual void LogNode(int32 Indent) const override
 	{
 		const FString Pad = FString::ChrN(Indent, ' ');
-		DLOG(Log, "%s[Goto] %s -> %s", *Pad, *ID.ToString(), *GotoID.ToString());
+		DLOG(Log, "%s[Goto] %s -> %s", *Pad, *ID.ToString(), *NextID.ToString());
 	}
 };
 

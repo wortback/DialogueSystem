@@ -294,7 +294,7 @@ FParserState* FMetaState::ProcessLine(const FString& Line, FDialogueParserContex
 		{
 			UDialogueGotoNode* Node = Context.AddNodeBranch<UDialogueGotoNode>(ID, FString("GotoNode"));
 			Node->ID = ID;
-			Node->GotoID = FName(BranchName);
+			Node->NextID = FName(BranchName);
 
 			// check if there's a previous node is a chain node and set its NextID to this one
 			Context.TryLinkNodes(ID);
@@ -304,7 +304,7 @@ FParserState* FMetaState::ProcessLine(const FString& Line, FDialogueParserContex
 
 		UDialogueGotoNode* Node = Context.AddNode<UDialogueGotoNode>(ID, FString("GotoNode"));
 		Node->ID = ID;
-		Node->GotoID = FName(BranchName);
+		Node->NextID = FName(BranchName);
 
 		// check if there's a previous node is a chain node and set its NextID to this one
 		Context.TryLinkNodes(ID);
