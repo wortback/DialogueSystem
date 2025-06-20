@@ -1,15 +1,25 @@
-A: "Hello"
-[branch A]
-    A: "Hello from the Sun!"
-    [goto B]
-[branch B]
-    A: "Hello from the Sun!"
-    [goto D]
-[branch C]
-    A: "Hello from the Sun!"
-    [goto C]
-[branch D]
-    A: "Hello from the Sun!"
-    [goto A]
-[branch E]
-    A: "Hello from the Sun!"
+
+
+
+
+DiaLogUE: "Hello! Time to write the game story of your life!!!"
+[choice]
+    "YESSSSSS!!!"
+    [goto BestStoryEver]
+[choice]
+    "YESSSSSS!!!"
+    [goto BestStoryEver]
+[choice]
+    "There is no other choice!"
+    [goto BestStoryEver]
+
+[branch BestStoryEver]
+    DiaLogUE: "Your story..."
+    DiaLogUE: "...is going to be amazing!"
+    [if bDetermined == true]
+        DiaLogUE: "Begin writing now!"
+
+
+
+
+

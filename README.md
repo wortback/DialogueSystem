@@ -1,3 +1,4 @@
+![Badge](images/badge.png)
 # DiaLogUE Unreal Plugin
 
 **DiaLogUE** is an Unreal Engine plugin designed to empower writers and narrative designers to create complex, branching narrative content in a clean, readable, non-programmer-friendly format.
@@ -26,6 +27,8 @@ You can preview the syntax in the [DiaLogUE Syntax Examples](DiaLogUE_Syntax_Exa
 - Parser outputs **native Unreal data assets** ready for use by runtime systems
 
 ## Syntax Highlighting
+
+![Syntax](images/syntax.png)
 
 For the best authoring experience, use the [DiaLogUE Syntax Highlighting VS Code extension](https://github.com/wortback/DiaLogUE)  
 This extension gives you instant feedback, colouring, and structure in `.dgl` files.
