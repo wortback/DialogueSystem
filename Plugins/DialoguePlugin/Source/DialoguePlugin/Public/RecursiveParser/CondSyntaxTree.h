@@ -47,7 +47,7 @@ struct FFlagConditionNode : public ICondNode
 		const TMap<FName, bool>& BoolFlags) const override
 	{
 		TO_IMPLEMENT(DialogueCondST, FString("Evaluate"));
-		return false;
+		return true;
 	}
 };
 
