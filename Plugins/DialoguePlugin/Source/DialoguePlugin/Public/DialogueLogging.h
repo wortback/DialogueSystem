@@ -22,6 +22,7 @@ MONOLITHIC_HEADER_BOILERPLATE()
 DECLARE_LOG_CATEGORY_EXTERN(DialogueParsing, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(DialogueValidation, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(DialogueRuntime, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(DialogueAssetGeneration, Log, All);
 
 // For logging related to the syntax tree in the recursive parser
 DECLARE_LOG_CATEGORY_EXTERN(DialogueCondST, Log, All);
