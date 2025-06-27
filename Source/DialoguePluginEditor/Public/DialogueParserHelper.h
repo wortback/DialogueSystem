@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DialogueDataAsset.h"
+#include "DialoguePlugin/Public/DialogueDataAsset.h"
 #include "UObject/NoExportTypes.h"
 #include "DialogueParserHelper.generated.h"
 
@@ -11,7 +11,7 @@
  *
  */
 UCLASS()
-class DIALOGUEPLUGIN_API UDialogueParserHelper : public UObject
+class DIALOGUEPLUGINEDITOR_API UDialogueParserHelper : public UObject
 {
 	GENERATED_BODY()
 

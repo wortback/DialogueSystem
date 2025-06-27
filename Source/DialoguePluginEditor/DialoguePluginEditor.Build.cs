@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class DialoguePlugin : ModuleRules
+public class DialoguePluginEditor : ModuleRules
 {
-    public DialoguePlugin(ReadOnlyTargetRules Target) : base(Target)
+    public DialoguePluginEditor(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
@@ -27,6 +27,7 @@ public class DialoguePlugin : ModuleRules
             {
                 "Core",
                 "Settings",
+                "DialoguePlugin",
 				// ... add other public dependencies that you statically link with here ...
 			}
             );
@@ -39,6 +40,12 @@ public class DialoguePlugin : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
+                "UMG",
+                "Blutility",
+                "EditorStyle",
+                "EditorScriptingUtilities",
+                "UnrealEd",
+                
 				// ... add private dependencies that you statically link with here ...	
 			}
             );

@@ -13,7 +13,7 @@
  * It transitions between different states that handle parsing based on certain keywords.
  * @see FDispatcherState
  */
-class DIALOGUEPLUGIN_API FDialogueParser
+class DIALOGUEPLUGINEDITOR_API FDialogueParser
 {
 	/** The array with file lines to be parsed */
 	TArray<FString> FileLines;

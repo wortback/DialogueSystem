@@ -2,7 +2,8 @@
 
 
 #include "DialogueDataAsset.h"
-#include "RecursiveParser/CondSyntaxTree.h"
+#include "Parsing/CondSyntaxTree.h"
+
 
 void UDialogueFork::LogNode(int32 Indent) const
 {

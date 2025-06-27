@@ -3,11 +3,11 @@
 
 #include "Serialization/ParserState.h"
 
-#include <DialogueLogging.h>
+#include <DialoguePlugin/Public/DialogueLogging.h>
 
-#include "DialogueDataAsset.h"
+#include "DialoguePlugin/Public/DialogueDataAsset.h"
 #include "RecursiveParser/CondParser.h"
-#include "RecursiveParser/CondSyntaxTree.h"
+#include "DialoguePlugin/Public/Parsing/CondSyntaxTree.h"
 #include "Serialization/DialogueParserContext.h"
 
 

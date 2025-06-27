@@ -3,12 +3,12 @@
 
 #include "Serialization/DialogueParser.h"
 #include "Serialization/ParserState.h"
-#include "RecursiveParser/CondSyntaxTree.h"
+#include "DialoguePlugin/Public/Parsing/CondSyntaxTree.h"
 
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 
-#include "DialogueLogging.h"
+#include "DialoguePlugin/Public/DialogueLogging.h"
 
 bool FDialogueParser::ParseFile(const FString& FilePath, UDialogueDataAsset& OutAsset)
 {

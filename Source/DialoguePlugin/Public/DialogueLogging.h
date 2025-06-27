@@ -19,13 +19,13 @@ MONOLITHIC_HEADER_BOILERPLATE()
 /* Public Logging
  *****************************************************************************/
 
-DECLARE_LOG_CATEGORY_EXTERN(DialogueParsing, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(DialogueValidation, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(DialogueRuntime, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(DialogueAssetGeneration, Log, All);
+DIALOGUEPLUGIN_API DECLARE_LOG_CATEGORY_EXTERN(DialogueParsing, Log, All);
+DIALOGUEPLUGIN_API DECLARE_LOG_CATEGORY_EXTERN(DialogueValidation, Log, All);
+DIALOGUEPLUGIN_API DECLARE_LOG_CATEGORY_EXTERN(DialogueRuntime, Log, All);
+DIALOGUEPLUGIN_API DECLARE_LOG_CATEGORY_EXTERN(DialogueAssetGeneration, Log, All);
 
 // For logging related to the syntax tree in the recursive parser
-DECLARE_LOG_CATEGORY_EXTERN(DialogueCondST, Log, All);
+DIALOGUEPLUGIN_API DECLARE_LOG_CATEGORY_EXTERN(DialogueCondST, Log, All);
 
 
 #define DLOG(Verbosity, Format, ...) \

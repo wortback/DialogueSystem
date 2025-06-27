@@ -82,7 +82,7 @@ struct FBinaryCondNode : public ICondNode
 };
 
 UCLASS(BlueprintType)
-class UCondTreeWrapper : public UObject
+class DIALOGUEPLUGIN_API UCondTreeWrapper : public UObject
 {
     GENERATED_BODY()
 

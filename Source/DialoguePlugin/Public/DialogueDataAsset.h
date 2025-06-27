@@ -106,7 +106,7 @@ struct FFlagEffect
 
 #pragma region DialogueNodes
 UCLASS(Abstract)
-class UDialogueNodeBase : public UObject
+class DIALOGUEPLUGIN_API UDialogueNodeBase : public UObject
 {
 	GENERATED_BODY()
 
@@ -118,7 +118,7 @@ public:
 };
 
 UCLASS(Abstract)
-class UDialogueNodeLinkable : public UDialogueNodeBase
+class DIALOGUEPLUGIN_API UDialogueNodeLinkable : public UDialogueNodeBase
 {
 	GENERATED_BODY()
 
@@ -129,7 +129,7 @@ public:
 };
 
 UCLASS(Blueprintable)
-class UDialogueFlagSet : public UDialogueNodeLinkable
+class DIALOGUEPLUGIN_API UDialogueFlagSet : public UDialogueNodeLinkable
 {
 	GENERATED_BODY()
 
@@ -154,7 +154,7 @@ public:
 };
 
 UCLASS(Blueprintable)
-class UDialogueGotoNode : public UDialogueNodeLinkable
+class DIALOGUEPLUGIN_API UDialogueGotoNode : public UDialogueNodeLinkable
 {
 	GENERATED_BODY()
 
@@ -167,7 +167,7 @@ public:
 };
 
 UCLASS(Blueprintable)
-class UDialogueSentence : public UDialogueNodeLinkable
+class DIALOGUEPLUGIN_API UDialogueSentence : public UDialogueNodeLinkable
 {
 	GENERATED_BODY()
 
@@ -192,7 +192,7 @@ public:
  * If RequiredFlagState is satisfied, this branch is chosen and FirstID is used to enter its Content map.
  */
 UCLASS(Blueprintable)
-class UDialogueBranch : public UDialogueNodeLinkable
+class DIALOGUEPLUGIN_API UDialogueBranch : public UDialogueNodeLinkable
 {
 	GENERATED_BODY()
 
@@ -285,7 +285,7 @@ struct FDialogueChoiceOption
 };
 
 UCLASS(Blueprintable)
-class UDialogueChoice : public UDialogueNodeLinkable
+class DIALOGUEPLUGIN_API UDialogueChoice : public UDialogueNodeLinkable
 {
 	GENERATED_BODY()
 
@@ -314,7 +314,7 @@ struct FBranchWithCondition
  * If no conditions match, the last branch (if any) is executed as an "else" case.
  */
 UCLASS(Blueprintable)
-class UDialogueFork : public UDialogueNodeLinkable
+class DIALOGUEPLUGIN_API UDialogueFork : public UDialogueNodeLinkable
 {
 	GENERATED_BODY()
 

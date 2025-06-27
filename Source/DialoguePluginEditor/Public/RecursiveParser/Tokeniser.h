@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "DialogueLogging.h"
+#include "DialoguePlugin/Public/DialogueLogging.h"
 #include "CoreMinimal.h"
 
 

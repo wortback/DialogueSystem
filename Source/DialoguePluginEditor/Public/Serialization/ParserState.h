@@ -54,7 +54,7 @@ class FNestedDispatcherState;
 /**
  *
  */
-class DIALOGUEPLUGIN_API FParserState
+class DIALOGUEPLUGINEDITOR_API FParserState
 {
 public:
 	static FSentenceState SentenceState;

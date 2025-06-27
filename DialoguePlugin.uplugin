@@ -3,7 +3,7 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "DiaLogUE Plugin",
-	"Description": "Plugin that manages the dialogue in the game. Developed for Dentity.",
+	"Description": "Plugin that manages the dialogue-related logic in the game. Contains both runtime and in-editor logic. Developed for Dentity.",
 	"Category": "Other",
 	"CreatedBy": "wortback",
 	"CreatedByURL": "",
@@ -19,6 +19,22 @@
 			"Name": "DialoguePlugin",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
-		}
-	]
+		},
+		{
+      			"Name": "DialoguePluginEditor",
+      			"Type": "Editor",
+      			"LoadingPhase": "Default", 
+			"AdditionalDependencies": [
+				"EditorScriptingUtilities",
+				"UnrealEd",
+				"Blutility"
+			]
+    		}
+	],
+	"Plugins": [
+    		{
+      			"Name": "EditorScriptingUtilities",
+      			"Enabled": true
+    		}
+  	]
 }

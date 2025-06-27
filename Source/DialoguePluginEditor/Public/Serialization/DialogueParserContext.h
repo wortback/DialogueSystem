@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DialogueDataAsset.h"
+#include "DialoguePlugin/Public/DialogueDataAsset.h"
 
-#include <DialogueLogging.h>
+#include <DialoguePlugin/Public/DialogueLogging.h>
 
 
 class FParserState;
@@ -14,7 +14,7 @@ class FParserState;
  * An object of this class should be passed into the parser so that it can track the indentation level
  * and whether the parser is in nested blocks.
  */
-class DIALOGUEPLUGIN_API FDialogueParserContext
+class DIALOGUEPLUGINEDITOR_API FDialogueParserContext
 {
 public:
 	friend class FDialogueParser;
