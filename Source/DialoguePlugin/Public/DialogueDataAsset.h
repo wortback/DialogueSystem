@@ -198,7 +198,7 @@ class DIALOGUEPLUGIN_API UDialogueBranch : public UDialogueNodeLinkable
 
 public:
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Dialogue")
-	TMap<FName, UDialogueNodeBase*> Content;
+	TMap<FName, TObjectPtr<UDialogueNodeBase>> Content;
 
 	/** ID of the first node in the content map to jump to */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
