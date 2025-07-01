@@ -48,6 +48,8 @@ bool FDialogueParser::ParseFile(const FString& FilePath, UDialogueDataAsset& Out
 		DLOG(Warning, "No shallow cycles found in the dialogue!");
 	}
 
+	Context->AssetBeingBuilt->Modify();
+	Context->AssetBeingBuilt->MarkPackageDirty();
 	return bSuccess;
 }
 
