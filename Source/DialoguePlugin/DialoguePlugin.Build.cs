@@ -27,6 +27,7 @@ public class DialoguePlugin : ModuleRules
             {
                 "Core",
                 "Settings",
+                "InputCore",
 				// ... add other public dependencies that you statically link with here ...
 			}
             );
