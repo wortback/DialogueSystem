@@ -40,14 +40,62 @@ struct FFlagConditionNode : public ICondNode
 	{
 	}
 
-	/**
-	 * TODO: Implement
-	 */
 	virtual bool Evaluate(const TMap<FName, int32>& IntFlags,
 		const TMap<FName, bool>& BoolFlags) const override
 	{
-		TO_IMPLEMENT(DialogueCondST, FString("Evaluate"));
-		return true;
+		FName FlagName = FName(Condition.FlagName);
+
+		// Boolean flag check
+		if (Condition.IntValue == INT_MAX)
+		{
+			const bool* Found = BoolFlags.Find(FlagName);
+			bool Value = Found ? *Found : false;
+
+			UE_LOG(LogTemp, Log, TEXT("[Evaluate] Bool Flag: %s, Expected: %s, Actual: %s, Comparison: %s"),
+				*FlagName.ToString(),
+				Condition.BoolValue ? TEXT("true") : TEXT("false"),
+				Value ? TEXT("true") : TEXT("false"),
+				*UEnum::GetValueAsString(Condition.ComparisonSymbol));
+
+			if (Condition.ComparisonSymbol == EFlagCompSymbol::Equals)
+				return Value == Condition.BoolValue;
+			if (Condition.ComparisonSymbol == EFlagCompSymbol::NotEquals)
+				return Value != Condition.BoolValue;
+		}
+		// Integer flag check
+		else
+		{
+			const int32* Found = IntFlags.Find(FlagName);
+			int32 Value = Found ? *Found : 0;
+
+			UE_LOG(LogTemp, Log, TEXT("[Evaluate] Int Flag: %s, Expected: %d, Actual: %d, Comparison: %s"),
+				*FlagName.ToString(),
+				Condition.IntValue,
+				Value,
+				*UEnum::GetValueAsString(Condition.ComparisonSymbol));
+
+			switch (Condition.ComparisonSymbol)
+			{
+			case EFlagCompSymbol::Equals:
+				return Value == Condition.IntValue;
+			case EFlagCompSymbol::NotEquals:
+				return Value != Condition.IntValue;
+			case EFlagCompSymbol::GreaterThan:
+				return Value > Condition.IntValue;
+			case EFlagCompSymbol::GreaterEquals:
+				return Value >= Condition.IntValue;
+			case EFlagCompSymbol::LessThan:
+				return Value < Condition.IntValue;
+			case EFlagCompSymbol::LessEquals:
+				return Value <= Condition.IntValue;
+			default:
+				UE_LOG(LogTemp, Warning, TEXT("[Evaluate] Unknown comparison symbol."));
+				return false;
+			}
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("[Evaluate] Invalid flag condition structure for flag %s."), *FlagName.ToString());
+		return false;
 	}
 };
 

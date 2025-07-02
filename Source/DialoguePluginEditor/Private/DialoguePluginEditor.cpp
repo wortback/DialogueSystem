@@ -2,7 +2,7 @@
 
 #include "DialoguePluginEditor.h"
 
-#include "DialoguePluginEditorSettings.h"
+//#include "DialoguePluginEditorSettings.h"
 #include "ISettingsModule.h"
 
 #define LOCTEXT_NAMESPACE "FDialoguePluginEditorModule"
@@ -11,16 +11,16 @@ void FDialoguePluginEditorModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 
-	ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings");
-    if (SettingsModule)
-    {
-        SettingsModule->RegisterSettings(
-            "Project", "Plugins", "DiaLogUE Plugin",
-            FText::FromString("DiaLogUE Plugin Pipeline"),
-            FText::FromString("Configure the automated generation of different data assets and tables."),
-            GetMutableDefault<UDialoguePluginEditorSettings>()
-        );
-    }
+// 	ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings");
+//     if (SettingsModule)
+//     {
+//         SettingsModule->RegisterSettings(
+//             "Project", "Plugins", "DiaLogUE Plugin",
+//             FText::FromString("DiaLogUE Plugin Pipeline"),
+//             FText::FromString("Configure the automated generation of different data assets and tables."),
+//             GetMutableDefault<UDialoguePluginEditorSettings>()
+//         );
+//     }
 }
 
 void FDialoguePluginEditorModule::ShutdownModule()
