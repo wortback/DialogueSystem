@@ -3,7 +3,7 @@
 
 #include "Serialization/DialogueParser.h"
 #include "Serialization/ParserState.h"
-#include "DialoguePlugin/Public/Parsing/CondSyntaxTree.h"
+#include "CondParser/CondTreeWrapper.h"
 
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"

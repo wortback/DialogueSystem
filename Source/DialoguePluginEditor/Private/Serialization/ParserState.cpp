@@ -6,8 +6,8 @@
 #include <DialoguePlugin/Public/DialogueLogging.h>
 
 #include "DialoguePlugin/Public/DialogueDataAsset.h"
-#include "RecursiveParser/CondParser.h"
-#include "DialoguePlugin/Public/Parsing/CondSyntaxTree.h"
+#include "CondParser/CondParser.h"
+#include "CondParser/CondTreeWrapper.h"
 #include "Serialization/DialogueParserContext.h"
 
 

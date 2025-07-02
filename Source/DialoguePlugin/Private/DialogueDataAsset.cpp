@@ -2,7 +2,7 @@
 
 
 #include "DialogueDataAsset.h"
-#include "Parsing/CondSyntaxTree.h"
+#include "CondParser/CondTreeWrapper.h"
 
 
 void UDialogueFork::LogNode(int32 Indent) const
