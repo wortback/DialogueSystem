@@ -583,15 +583,16 @@ bool FExtractFlagsState::ParseFlagCondition(const FString& Line, UCondTreeWrappe
 	}
 
 	Tree->SetFlags(RF_Public | RF_Transactional);
-	TArray<FCondToken> OutTokens;
-	TokeniseCondition(Remainder, OutTokens);
-	PrintDebugTokens(OutTokens);
-	FCondParser CondParser(OutTokens);
-	TUniquePtr<ICondNode> Root = CondParser.Parse();
+// 	TArray<FCondToken> OutTokens;
+// 	TokeniseCondition(Remainder, OutTokens);
+// 	PrintDebugTokens(OutTokens);
+// 	FCondParser CondParser(OutTokens);
+	TUniquePtr<ICondNode> Root = FCondParser::Parse(Remainder);
 	if (Root.IsValid())
 	{
 		DLOG(Log, "Successfully parsed the conditional tree!");
 		Tree->Init(MoveTemp(Root));
+		Tree->CondString = Remainder;
 		return true;
 	}
 	DLOG(Error, "Failed to parse the conditional tree!", *Line);
