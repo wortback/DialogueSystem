@@ -6,6 +6,13 @@
 #include "DialogueFlagUtils.generated.h"
 
 
+UENUM(BlueprintType)
+enum class EFlagType : uint8
+{
+	Boolean,
+	Numeric,
+	None
+};
 
 UENUM(BlueprintType)
 enum class EFlagCompSymbol : uint8

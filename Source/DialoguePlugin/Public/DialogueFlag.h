@@ -4,15 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "DialogueFlagUtils.h"
 #include "DialogueFlag.generated.h"
 
 
-UENUM(BlueprintType)
-enum class EFlagType : uint8
-{
-	Boolean,
-	Numeric
-};
 
 /**
  * This class represents flags that can be used in the dialogue to track certain states.

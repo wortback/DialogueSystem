@@ -33,6 +33,7 @@ struct FParsedFlag
 		Effect.Operator = Operator;
 		Effect.IntValue = nValue;
 		Effect.BoolValue = bValue;
+		Effect.FlagType = nValue == INT_MAX ? EFlagType::Boolean : EFlagType::Numeric;
 		return Effect;
 	}
 };

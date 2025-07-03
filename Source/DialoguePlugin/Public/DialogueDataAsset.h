@@ -76,6 +76,9 @@ struct FFlagEffect
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EFlagOperator Operator;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EFlagType FlagType;
+
 	/** Value to be added/subtracted/set (depending on the operator) from the value in the flag */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 IntValue;
