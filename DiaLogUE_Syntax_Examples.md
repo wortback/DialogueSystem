@@ -176,5 +176,3 @@ SpeakerA: "What do you want to eat?" # This is also a comment
 ```
 
 ---
-
-Feel free to copy, edit, and expand! If you want a section on how your comment handling works, just ask.
