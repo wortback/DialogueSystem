@@ -117,7 +117,8 @@ public:
 	/** Check if the previous node is a chain node and set its NextID to the ID provided */
 	bool TryLinkNodes(FName ID)
 	{
-		if (PrevNode && PrevNode->IsA(UDialogueNodeLinkable::StaticClass()))
+		if (PrevNode && PrevNode->IsA(UDialogueNodeLinkable::StaticClass())
+		&& !PrevNode->IsA(UDialogueGotoNode::StaticClass()))
 		{
 			UDialogueNodeLinkable* Prev = Cast<UDialogueNodeLinkable>(PrevNode);
 			Prev->NextID = ID;
