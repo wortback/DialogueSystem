@@ -96,27 +96,24 @@ protected:
 	 * Extracts the tag from a line, e.g. "[goto BranchName]"
 	 * If the line does not contain a tag, it returns an empty string.
 	 * If the line contains only an opening or (exclusive) closing brace, it returns false.
-	 * 
+	 *
 	 * @param Line The line to extract the tag from
 	 * @param Tag The output string that will hold the extracted tag
-	 * 
+	 *
 	 * @return true if the tag was successfully extracted, false otherwise
 	 */
 	bool ExtractTag(const FString& Line, FString& Tag)
 	{
-		int32 Start, End;
-		if (Line.FindChar('[', Start) && Line.FindChar(']', End) && End > Start)
+		if (int32 Start = -1, End = -1; 
+			!Line.Contains(":") && Line.FindChar('[', Start) && Line.FindChar(']', End) 
+			&& End > Start)
 		{
 			Tag = Line.Mid(Start + 1, End - Start - 1).TrimStartAndEnd();
 			return true;
 		}
-		// No braces -> sentence
-		if (!Line.FindChar('[', Start) && !Line.FindChar(']', End))
-		{
-			Tag = "";
-			return true;
-		}
-		return false;
+		//  -> sentence
+		Tag = "";
+		return true;
 	}
 
 	FString TrimAfterBrackets(const FString& Line)
@@ -267,7 +264,8 @@ private:
 	bool ParseFlagCondition(const FString& Line, UCondTreeWrapper* Tree);
 };
 
-class FForkState final : public FParserState {
+class FForkState final : public FParserState
+{
 	friend class FBranchState;
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
