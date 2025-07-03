@@ -1,0 +1,123 @@
+# Here you can find examples of valid and invalid DiaLogUE syntax 
+# If you already have the VS Code highlighting extention, you can see how it works
+
+# AVAILABLE NODES
+
+# SENTENCE ############################################################################################
+
+# Sentence: contains the speaker name and text in double quotation marks, separated by a colon.
+
+# Valid syntax:
+Speaker: "The weather is great today."
+
+# Invalid syntax:
+Speaker "The weather is great today."
+""
+Speaker: The weather is great today."
+""
+Speaker: "The weather is great today.
+""
+
+# CHOICE BLOCK #######################################################################################
+
+# Choice Block: contains choice options that consist of a choice text and optional meta
+# Optional meta may include [condition 'expr'] to highlight that the choice option is only displayed 
+#												if expression 'expr' is satisfied
+#							[goto 'branch_name'] to highlight that after picking this option, 
+#												the dialogue flow will jump to the branch with this name
+
+# Valid Syntax:
+SpeakerA: "What do you want to eat?"
+[choice]
+	"Pizza"
+	[condition F_LikesPizza = true]
+	[goto B_Pizza] 
+[choice]
+	"Sushi"
+	[condition F_LikesSushi=true]
+[choice]
+	"I'm not hungry."
+[choice]
+	"Something light."
+	[goto B_CrazyAdventure]
+
+# Invalid Syntax:
+# 	1. No choice text
+#	2. Choice text doesn't come first
+#	3. Choice text is not surrounded by the double quotation marks
+SpeakerA: "What do you want to eat?"
+[choice]
+	[condition F_LikesPizza = true]
+	[goto B_Pizza] 
+[choice]
+	[condition F_LikesSushi=true]
+	"Sushi"
+[choice]
+	"I'm not hungry.
+[choice]
+	Something light."
+	[goto B_CrazyAdventure]
+""
+
+# BRANCH BLOCK #######################################################################################
+
+# Branch Block: contains other dialogue nodes such as sentences and choices.
+# IMPORTANT: NESTED BRANCHES ARE NOT ALLOWED!!!
+
+# Valid Syntax:
+[branch B_CoolAdventure]
+	SpeakerA: "What do you want to do?"
+	[choice]
+		"Go skating!"
+	[choice]
+		"Go jogging."
+	SpeakerA: "Great, let's go!"
+	SpeakerB: "Wait a moment. I though of something better!"
+	[goto B_CrazyAdventure]
+
+# Invalid Syntax:
+# 	1. Wrong indentation
+#	2. Missing branch name
+[branch]
+	SpeakerA: "What do you want to do?"
+
+[branch B_CoolAdventure]
+		SpeakerA: "What do you want to do?"
+	[choice]
+		"Go skating!"
+	[choice]
+		"Go jogging."
+SpeakerA: "Great, let's go!"
+
+# SET META ##########################################################################################
+
+# 'set' meta data: allows to change a flag state (both numeric integer and boolean flags are supported)
+
+# Valid Syntax:
+[set F_LikesElephants=true]
+
+[set F_ElephantCount+10]
+
+[set F_GiraffeCount-10]
+
+# Invalid Syntax:
+# 	1. Missing or inproper brackets
+[set F_LikesElephants=true
+
+set F_LikesElephants=true]
+
+# IF-ELSE CONDITIONAL ##################################################################################
+	
+# if-else conditionals: support branching without declaring a branch based on a flag's state
+
+# Valid Syntax:
+[if F_GiraffeCount>=10]
+	SpeakerA: "I'm taking this giraffe home!"
+
+[if F_ElephantCount>15]
+	SpeakerA: "I'm taking this elephant home!"
+
+[if F_LikesElephants==true]
+	SpeakerA: "I will take care of this elephant for the rest of my life!"
+[else]
+	SpeakerA: "Let me think."
