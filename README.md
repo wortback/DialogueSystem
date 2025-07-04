@@ -35,11 +35,10 @@ This extension gives you instant feedback, colouring, and structure in `.dgl` fi
 
 After installing the extension, you can preview the highlighting here [DiaLogUE Examples](DiaLogUESyntax.dgl).
 
-## Roadmap
+## Documentation
 
-- **Coming Soon:**  
-  - Full runtime system for consuming data assets in Unreal Engine
-  - Example UI implementation to show how dialogues can be played in-game
+You can check out the architecture of the plugin here [DiaLogUE Documentation](Docs/index.md).
+
 
 ## License
 
