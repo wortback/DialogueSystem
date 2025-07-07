@@ -12,9 +12,14 @@
 
 bool FDialogueParser::ParseFile(const FString& FilePath, UDialogueDataAsset& OutAsset)
 {
-	if (Context) delete Context;
-	Context = new FDialogueParserContext();
+	if (!Context)
+		Context = new FDialogueParserContext();
+	else
+		Context->Clear();
+
 	Context->AssetBeingBuilt = &OutAsset;
+
+	bool bSuccess = true;
 
 	// Check if the asset is populated with data and clean it
 	if (OutAsset.DialogueMap.Num() > 0)
@@ -23,33 +28,39 @@ bool FDialogueParser::ParseFile(const FString& FilePath, UDialogueDataAsset& Out
 		DLOG(Warning, "Clearing existing data in the asset...");
 	}
 
-	ValidateFlags(FilePath);
-
-	bool bSuccess = ReadFile(FilePath);
-	if (bSuccess)
+	bSuccess &= ValidateFlags(FilePath);
+	if (ReadFile(FilePath))
 	{
 		LogParseResult(OutAsset);
 	}
+	else
+		bSuccess &= false;
 
 	// Validation for the dialogue flow: check unreachable nodes and infinite loops
-	ValidateDialogueFlow(OutAsset);
-
-	TArray<FString> Cycles;
-	if (HasShallowCycles(OutAsset, Cycles))
+	if (bSuccess)
 	{
-		DLOG(Warning, "Has found shallow cycles in the dialogue!");
-		for (const auto& Cycle : Cycles)
+		bSuccess &= ValidateDialogueFlow(OutAsset);
+		TArray<FString> Cycles;
+		if (HasShallowCycles(OutAsset, Cycles))
 		{
-			DLOG(Log, "%s", *Cycle);
+			bSuccess &= false;
+			DLOG(Warning, "Has found shallow cycles in the dialogue!");
+			for (const auto& Cycle : Cycles)
+			{
+				DLOG(Log, "%s", *Cycle);
+			}
+		}
+		else
+		{
+			DLOG(Log, "No shallow cycles found in the dialogue!");
 		}
 	}
-	else
+
+	if (bSuccess)
 	{
-		DLOG(Warning, "No shallow cycles found in the dialogue!");
+		DLOG(Warning, "Successfully parsed the asset!");
 	}
 
-	Context->AssetBeingBuilt->Modify();
-	Context->AssetBeingBuilt->MarkPackageDirty();
 	return bSuccess;
 }
 
@@ -302,7 +313,7 @@ bool FDialogueParser::HasShallowCycles(const UDialogueDataAsset& Asset, TArray<F
 	{
 		if (!Node.Value.Key)
 		{
-			BranchGotoDFS({Node.Key, Node.Value.Value}, BranchesGotos, Cycles, Path);
+			BranchGotoDFS({ Node.Key, Node.Value.Value }, BranchesGotos, Cycles, Path);
 		}
 	}
 

@@ -20,6 +20,8 @@ void FDialoguePluginModule::StartupModule()
             GetMutableDefault<UDialoguePluginSettings>()
         );
     }
+
+
 }
 
 void FDialoguePluginModule::ShutdownModule()
