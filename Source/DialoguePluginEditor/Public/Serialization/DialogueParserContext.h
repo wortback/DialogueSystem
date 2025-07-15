@@ -53,6 +53,19 @@ private:
 	FDialogueParserContext() {}
 
 public:
+	void Clear()
+	{
+		AssetBeingBuilt = nullptr;
+		IDCounter = 0;
+		ExtractedTag = "";
+		PrevNode = nullptr;
+		CurrentNode = nullptr;
+		BranchNode = nullptr;
+		IndentationLevel = 0;
+		MissingFlags.Reset();
+		NestStack.Reset();
+	}
+
 	/** Adds the node to the data asset */
 	template<typename T>
 	T* AddNode(FName ID, const FString& NodeType)

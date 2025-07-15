@@ -7,15 +7,16 @@
 #include "UObject/NoExportTypes.h"
 #include "DialogueParserHelper.generated.h"
 
+class UDialogueDataAsset;
 /**
  *
  */
-UCLASS()
+UCLASS(Blueprintable)
 class DIALOGUEPLUGINEDITOR_API UDialogueParserHelper : public UObject
 {
 	GENERATED_BODY()
 
 public:
 	UFUNCTION(BlueprintCallable, CallInEditor)
-	static void RunParser(UDialogueDataAsset* Asset);
+	static UDialogueDataAsset* RunParser(FFilePath DGLFile);
 };
