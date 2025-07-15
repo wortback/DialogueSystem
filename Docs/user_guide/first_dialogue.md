@@ -8,8 +8,8 @@
 
 1. Write .dgl file that conforms to DiaLogUE syntax
 2. [Opt.] If you use any dialogue flags, create these beforehand
-3. Navigate to the *Asset Parser* tab and parse the file
-4. [Opt.] If you use any dialogue flags, create a global flag table in *Asset Parser* tab
+3. [Opt.] If you use any dialogue flags, create a global flag table in *Asset Parser* tab
+4. Navigate to the *Asset Parser* tab and parse the file
 5. Press on play and select the generated asset in the asset drop down of the debug widget.
 
 ## Step 1: .dgl File
@@ -42,7 +42,12 @@ Here is the example of how to setup **Counter** dialogue flag that is used in th
 
 ---
 
-## Step 3: Asset Parser
+## Step 3: Flag Table Generation
+The runtime system needs a table for the flag lookup. Press **Build FlagTable** to generate it. Examine the *Output Log* and ensure that table generation was successful. 
+
+---
+
+## Step 4: Asset Parser
 If *Asset Parser* is not opened, navigate to the DiaLogUE plugin setting under project settings and set **OpenAssetParserOnStartup** to true and restart the editor. 
 
 <p align="center">
@@ -53,5 +58,5 @@ Press **Browse .dgl file** and select the .dgl file in the explorer. Then procee
 
 ---
 
-## Step 4: Flag Table Generation
-The runtime system needs a table for the flag lookup. Press **Build FlagTable** to generate it. Examine the *Output Log* and ensure that table generation was successful. 
+## Step 5: Debug Widget Selection
+TODO
