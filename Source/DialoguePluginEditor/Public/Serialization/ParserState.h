@@ -252,16 +252,21 @@ class FExtractFlagsState final : public FParserState
 	friend class FMetaState;
 	friend class FChoiceMetaState;
 	friend class FForkState;
+
+	static TObjectPtr<UDataTable> FlagTable;
+
 public:
 	virtual FParserState* ProcessLine(const FString& Line, FDialogueParserContext& Context) override;
 private:
-	UDialogueFlag* FindFlag(const FString& FlagName);
+	bool FindFlag(const FString& FlagName);
 
 	bool ParseFlagName(const FString& Line, FString& FlagName);
 
 	bool ParseFlagExpression(const FString& Line, FParsedFlag& OutFlag);
 
 	bool ParseFlagCondition(const FString& Line, UCondTreeWrapper* Tree);
+
+	bool LoadFlagTable();
 };
 
 class FForkState final : public FParserState

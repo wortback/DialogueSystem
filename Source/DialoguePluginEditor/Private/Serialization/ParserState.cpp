@@ -5,9 +5,11 @@
 
 #include <DialoguePlugin/Public/DialogueLogging.h>
 
+#include "DialoguePluginSettings.h"
 #include "DialoguePlugin/Public/DialogueDataAsset.h"
 #include "CondParser/CondParser.h"
 #include "CondParser/CondTreeWrapper.h"
+#include "DialogueFlags/FlagTableRow.h"
 #include "Serialization/DialogueParserContext.h"
 
 
@@ -23,6 +25,8 @@ FBranchDispatcherState FDispatcherState::BranchDispatcher;
 FNestedDispatcherState FDispatcherState::NestedDispatcher;
 FExtractFlagsState FParserState::ExtractFlagsState;
 FForkState FParserState::ConditionalState;
+
+TObjectPtr<UDataTable> FExtractFlagsState::FlagTable = nullptr;
 
 
 
@@ -433,7 +437,7 @@ FParserState* FExtractFlagsState::ProcessLine(const FString& Line, FDialoguePars
 	if (!ExtractTag(Line, Tag)) return &FParserState::Error;
 
 	Tag = Tag.ToLower();
-	if (Tag.StartsWith("set") || Tag.StartsWith("condition"))
+	if (Tag.StartsWith("set") || Tag.StartsWith("condition") || Tag.StartsWith("if"))
 	{
 		FString FlagName;
 
@@ -449,19 +453,24 @@ FParserState* FExtractFlagsState::ProcessLine(const FString& Line, FDialoguePars
 	return &FParserState::ExtractFlagsState;
 }
 
-UDialogueFlag* FExtractFlagsState::FindFlag(const FString& FlagName)
+bool FExtractFlagsState::FindFlag(const FString& FlagName)
 {
-	const FString AssetPath = FString::Printf(
-		TEXT("/Game/Dialogue/%s.%s"),
-		*FlagName,
-		*FlagName
-	);
+	if (!FlagTable)
+	{
+		if (!LoadFlagTable())
+		{
+			DLOG(Error, "Failed to find the global flag table. Please check the path and name specified in the plugin settings.");
+			return false;
+		}
+	}
 
-	// try to load
-	UDialogueFlag* FlagAsset = Cast<UDialogueFlag>(
-		StaticLoadObject(UDialogueFlag::StaticClass(), /*Outer=*/nullptr, *AssetPath));
+	const FFlagTableRow* Row =
+		FlagTable->FindRow<FFlagTableRow>(FName(FlagName),TEXT("Flag lookup"));
 
-	return FlagAsset;
+	if (Row)
+		return true;
+
+	return false;
 }
 
 bool FExtractFlagsState::ParseFlagName(const FString& Line, FString& FlagName)
@@ -597,6 +606,21 @@ bool FExtractFlagsState::ParseFlagCondition(const FString& Line, UCondTreeWrappe
 	}
 	DLOG(Error, "Failed to parse the conditional tree!", *Line);
 	return false;
+}
+
+bool FExtractFlagsState::LoadFlagTable()
+{
+	if (!FlagTable)
+	{
+		DLOG(Warning, "Loading the global flag table for flag validation...");
+		const UDialoguePluginSettings* Settings = GetDefault<UDialoguePluginSettings>();
+		if (!Settings) return false;
+
+		FlagTable = Cast<UDataTable>(Settings->GlobalFlagTable.TryLoad());
+		if (!FlagTable) return false;
+		DLOG(Warning, "Loaded the global flag table.");
+	}
+	return true;
 }
 
 FParserState* FForkState::ProcessLine(const FString& Line, FDialogueParserContext& Context)
