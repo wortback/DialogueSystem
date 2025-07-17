@@ -9,7 +9,7 @@ A: "Let's test out the dialogue flags."
 A: "Let's test out making choices."
 [choice]
     "This is choice 1."
-    [set ChoiceCounter = 1]
+    [set Choice = 1]
 [choice]
     "This is choice 2."
     [set Counter = 2]
