@@ -1,0 +1,16 @@
+# You can use this file to test out the plugin
+
+A: "Hello! Here is the test dialogue."
+A: "Let's test out the dialogue flags."
+[if BooleanFlag==true]
+	A: "This boolean flag is set to true!"
+[else]
+    A: "This boolean flag is set to false!"
+A: "Let's test out making choices."
+[choice]
+    "This is choice 1."
+    [set Choice = 1]
+[choice]
+    "This is choice 2."
+    [set Counter = 2]
+A: "End of the test dialogue."
