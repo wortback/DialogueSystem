@@ -54,9 +54,17 @@ If *Asset Parser* is not opened, navigate to the DiaLogUE plugin setting under p
   <img src="../images/AssetParserWindow.png"  width="70%" alt="Parser window"/>
 </p>
 
-Press **Browse .dgl file** and select the .dgl file in the explorer. Then proceed with **Parse File**. Examine the log ouput and ensure that parsing went smoothly. Fix the errors if applicable. 
+Press **Browse .dgl file** and select the .dgl file in the explorer. Then proceed with **Parse File**. Check out the log ouput and ensure that parsing went smoothly. Fix the errors if applicable. 
+
+The parsed uasset will be generated in the specified folder in the plugin settings. It's name will match the name of the .dgl file.
 
 ---
 
 ## Step 5: Debug Widget Selection
-After you have
+After you have successfully parsed the asset, you can now play test it at runtime. Just hit play and by default the runtime dialogue system will spawn a debug widget. There in the asset drop down at the top, you can see all available dialogue uassets. 
+
+<p align="center">
+  <img src="../images/DebugAssetDropdown.png"  width="100%" alt="Parser window"/>
+</p>
+
+Useful logs such as the final flag state change are also printed out during the runtime session and can be found in the *Output Log* tab.
