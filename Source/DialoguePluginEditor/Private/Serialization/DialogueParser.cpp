@@ -125,7 +125,7 @@ bool FDialogueParser::ValidateFlags(const FString& FilePath)
 			State = State->ProcessLine(Line, *Context);
 			if (!State || State == &FParserState::Error)
 			{
-				VLOG(Error, "Parsing was aborted due to an error.");
+				VLOG(Error, "Flag Validation was aborted due to an error.");
 				VLOG(Error, "Line number: %d", Counter);
 				VLOG(Error, "Line content: %s", *Line);
 				return false;
