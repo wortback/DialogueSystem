@@ -68,3 +68,5 @@ After you have successfully parsed the asset, you can now play test it at runtim
 </p>
 
 Useful logs such as the final flag state change are also printed out during the runtime session and can be found in the *Output Log* tab.
+
+To toggle this debug widget, open `BP_DialogueDebugController` that is located under `...\Plugins\DialogueSystem\Content\Debug`  and modify `bOpenDialogueDebugWidget`.
