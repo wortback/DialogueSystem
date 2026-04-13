@@ -27,13 +27,20 @@ UDialogueDataAsset* UDialogueParserHelper::RunParser(FFilePath DGLFile)
     if (UEditorAssetLibrary::DoesAssetExist(PackageName))
     {
         Package = LoadPackage(nullptr, *PackageName, LOAD_NoWarn);
+        
+        if (!Package)
+        {
+            UE_LOG(DialogueAssetGeneration, Error,
+                TEXT("Asset '%s' exists but Package is null. Aborting."), *PackageName);
+            return nullptr;
+        }
+        
         Package->FullyLoad();   // make sure everything is in memory
-
         AssetPtr = FindObject<UDialogueDataAsset>(Package, *AssetName);
         if (!AssetPtr)
         {
             UE_LOG(DialogueAssetGeneration, Error,
-                TEXT("Asset '%s' exists but is not a UDialogueDataAsset – aborting."), *PackageName);
+                TEXT("Asset '%s' exists but is not a UDialogueDataAsset. Aborting."), *PackageName);
             return nullptr;
         }
 
