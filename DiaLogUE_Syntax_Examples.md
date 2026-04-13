@@ -36,9 +36,9 @@ Speaker: "The weather is great today.
 
 ### Choice Block
 
-A **choice block** contains choice options. Each option consists of a choice text and optional meta.  
+A **choice block** contains choice options. Each option consists of a choice text and optional meta.
 Meta can include:
-- `[condition 'expr']` — the choice is only shown if expression `'expr'` is satisfied  
+- `[condition 'expr']` — the choice is only shown if expression `'expr'` is satisfied. `==, <=, >=, !=, <, >` are supported.
 - `[goto 'branch_name']` — after picking this option, dialogue jumps to the branch with this name
 
 **Valid syntax:**
@@ -46,11 +46,11 @@ Meta can include:
 SpeakerA: "What do you want to eat?"
 [choice]
 	"Pizza"
-	[condition F_LikesPizza = true]
+	[condition F_LikesPizza == true]
 	[goto B_Pizza] 
 [choice]
 	"Sushi"
-	[condition F_LikesSushi=true]
+	[condition F_LikesSushi==true]
 [choice]
 	"I'm not hungry."
 [choice]
@@ -66,10 +66,10 @@ SpeakerA: "What do you want to eat?"
 ```python
 SpeakerA: "What do you want to eat?"
 [choice]
-	[condition F_LikesPizza = true]
+	[condition F_LikesPizza == true]
 	[goto B_Pizza] 
 [choice]
-	[condition F_LikesSushi=true]
+	[condition F_LikesSushi==true]
 	"Sushi"
 [choice]
 	"I'm not hungry.
@@ -140,7 +140,7 @@ set F_LikesElephants=true]
 
 ### If-Else Conditional
 
-**if-else** conditionals allow branching without declaring a branch, based on a flag’s state.
+**if-else** conditionals allow branching without declaring a branch, based on a flag’s state. `==, <=, >=, !=, <, >` are supported.
 Nested if-else branches are supported too. 
 **IMPORTANT:** Every *else* must have at least one *if* predecessor!
 
