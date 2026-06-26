@@ -88,7 +88,7 @@ static void TokeniseCondition(const FString& Input, TArray<FCondToken>& OutToken
 		// check one-char operators
 		if (Input[i] == TEXT('>') || Input[i] == TEXT('<'))
 		{
-			OutTokens.Add({ ECondTokenType::CompSymbol, Input.Mid(i, i)});
+			OutTokens.Add({ ECondTokenType::CompSymbol, Input.Mid(i, 1)});
 			i++;
 			continue;
 		}

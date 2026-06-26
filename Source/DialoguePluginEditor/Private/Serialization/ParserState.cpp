@@ -682,10 +682,15 @@ FParserState* FForkState::ProcessLine(const FString& Line, FDialogueParserContex
 
 void FForkState::CreateAndLinkNestingBlock(FDialogueParserContext& Context, UCondTreeWrapper* Tree)
 {
+	// Save the active branch node before entering the first fork level so it can be restored
+	// when the last fork is popped (e.g. an if-block inside a top-level [branch])
+	if (Context.NestStack.IsEmpty())
+		Context.PreForkBranchNode = Context.BranchNode;
+
 	// Create a fork and push to the stack
 	FName ID = GenerateID(Context);
 	UDialogueFork* Node;
-	if (Context.NestStack.IsEmpty())
+	if (Context.NestStack.IsEmpty() && !Context.BranchNode)
 		Node = Context.AddNode<UDialogueFork>(ID, FString("ForkNode"));
 	else
 	{
@@ -746,10 +751,13 @@ FParserState* FNestedDispatcherState::ProcessLine(const FString& Line, FDialogue
 			UDialogueFork* Popped = Context.NestStack.Pop();
 			if (!Context.NestStack.IsEmpty())
 				Context.BranchNode = Context.NestStack.Last()->Branches.Last().Branch;
-			// If we popped the last fork, it means we are in the main body and the branch node has to be reset
+			// If we popped the last fork, restore the branch node that was active before
+			// the first if-block was entered (nullptr if outside any [branch], or the
+			// enclosing [branch] node if we were inside one)
 			else
 			{
-				Context.BranchNode = nullptr;
+				Context.BranchNode = Context.PreForkBranchNode;
+				Context.PreForkBranchNode = nullptr;
 			}
 			// set current node to the last node in the branch i.e. the popped fork
 			Context.CurrentNode = Popped;

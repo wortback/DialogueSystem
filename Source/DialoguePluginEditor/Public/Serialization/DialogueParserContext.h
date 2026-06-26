@@ -49,6 +49,10 @@ public:
 	/** Keeps track of the current nested level in if-else constructions */
 	TArray<UDialogueFork*> NestStack;
 
+	/** Saves the BranchNode that was active before the first if-block was entered, so it can be
+	 *  restored when the last fork is popped and we're still inside a top-level [branch]. */
+	TObjectPtr<UDialogueBranch> PreForkBranchNode = nullptr;
+
 private:
 	FDialogueParserContext() {}
 
@@ -64,6 +68,7 @@ public:
 		IndentationLevel = 0;
 		MissingFlags.Reset();
 		NestStack.Reset();
+		PreForkBranchNode = nullptr;
 	}
 
 	/** Adds the node to the data asset */
