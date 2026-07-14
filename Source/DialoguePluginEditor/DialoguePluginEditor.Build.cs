@@ -45,9 +45,10 @@ public class DialoguePluginEditor : ModuleRules
                 "EditorStyle",
                 "EditorScriptingUtilities",
                 "UnrealEd",
-                "Projects"
-                
-				// ... add private dependencies that you statically link with here ...	
+                "Projects", 
+                "OutputLog"
+
+                // ... add private dependencies that you statically link with here ...	
 			}
             );
 

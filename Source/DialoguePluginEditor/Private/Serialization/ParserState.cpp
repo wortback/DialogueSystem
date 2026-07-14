@@ -497,7 +497,7 @@ bool FExtractFlagsState::ParseFlagName(const FString& Line, FString& FlagName)
 	if (!ParseNameFromLine(Line, FlagName, TEXT("keyword and flag name")))
 		return false;
 
-	DLOG(Warning, "Flag name is: %s", *FlagName);
+	DLOG(Log, "Found flag: %s", *FlagName);
 
 	// Additional operator split
 	bool bParsed = false;

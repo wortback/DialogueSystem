@@ -22,6 +22,10 @@ UDialogueDataAsset* UDialogueParserHelper::RunParser(FFilePath DGLFile)
 
     UPackage* Package = nullptr;
     UDialogueDataAsset* AssetPtr = nullptr;
+	
+	UE_LOG(DialogueAssetGeneration, Log, TEXT("///"));
+	UE_LOG(DialogueAssetGeneration, Log, TEXT("----------------- BEGIN PARSING -----------------"));
+	UE_LOG(DialogueAssetGeneration, Log, TEXT("///"));
 
     // LOAD existing package + asset
     if (UEditorAssetLibrary::DoesAssetExist(PackageName))
