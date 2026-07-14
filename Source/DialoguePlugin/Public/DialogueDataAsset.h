@@ -169,6 +169,20 @@ public:
 	}
 };
 
+/** Terminal node: reaching it ends the dialogue immediately, even inside a branch or fork */
+UCLASS(Blueprintable)
+class DIALOGUEPLUGIN_API UDialogueEndNode : public UDialogueNodeBase
+{
+	GENERATED_BODY()
+
+public:
+	virtual void LogNode(int32 Indent) const override
+	{
+		const FString Pad = FString::ChrN(Indent, ' ');
+		DLOG(Log, "%s[End] %s", *Pad, *ID.ToString());
+	}
+};
+
 UCLASS(Blueprintable)
 class DIALOGUEPLUGIN_API UDialogueSentence : public UDialogueNodeLinkable
 {

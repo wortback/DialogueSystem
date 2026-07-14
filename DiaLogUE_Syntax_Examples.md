@@ -11,6 +11,7 @@ Here you can find examples of **valid and invalid DiaLogUE syntax**.
 - [Choice Block](#choice-block)
 - [Branch Block](#branch-block)
 - [Set Meta](#set-meta)
+- [End Meta](#end-meta)
 - [If-Else Conditional](#if-else-conditional)
 - [Comment Syntax](#comment-syntax)
 
@@ -134,6 +135,31 @@ The **set** meta data allows changing a flag’s state (both integer and boolean
 ```python
 [set F_LikesElephants=true
 set F_LikesElephants=true]
+```
+
+---
+
+### End Meta
+
+The **end** meta data marks the end of the dialogue. When the dialogue flow reaches an `[end]` node,
+the dialogue terminates immediately — even inside a branch or an if-else block.
+
+**Valid syntax:**
+```python
+SpeakerA: "Goodbye!"
+[end]
+
+[branch B_Farewell]
+	SpeakerA: "See you tomorrow."
+	[end]
+```
+
+**Invalid syntax:**
+- Missing or improper brackets
+
+```python
+[end
+end]
 ```
 
 ---

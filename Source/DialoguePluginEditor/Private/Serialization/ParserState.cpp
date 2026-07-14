@@ -355,6 +355,25 @@ FParserState* FMetaState::ProcessLine(const FString& Line, FDialogueParserContex
 		return &FParserState::Dispatcher;
 	}
 
+	if (Context.ExtractedTag.StartsWith("end"))
+	{
+		Context.PrevNode = Context.CurrentNode;
+		Context.CurrentNode = nullptr;
+		FName ID = GenerateID(Context);
+
+		UDialogueEndNode* Node;
+		if (Context.BranchNode)
+			Node = Context.AddNodeBranch<UDialogueEndNode>(ID, FString("EndNode"));
+		else
+			Node = Context.AddNode<UDialogueEndNode>(ID, FString("EndNode"));
+		Node->ID = ID;
+
+		// check if there's a previous node is a chain node and set its NextID to this one
+		Context.TryLinkNodes(ID);
+		Context.CurrentNode = Node;
+		return &FParserState::Dispatcher;
+	}
+
 	return &FParserState::Error;
 }
 
@@ -404,7 +423,7 @@ FParserState* FDispatcherState::Dispatch(const FString& Line, FDialogueParserCon
 		return ChoiceState.ProcessLine(Trimmed, Context);
 	if (Tag.StartsWith("branch"))
 		return BranchState.ProcessLine(Trimmed, Context);
-	if (Tag.StartsWith("goto") || Tag.StartsWith("set") || Tag.StartsWith("condition"))
+	if (Tag.StartsWith("goto") || Tag.StartsWith("set") || Tag.StartsWith("condition") || Tag.StartsWith("end"))
 		return MetaState.ProcessLine(Trimmed, Context);
 	if (Tag.StartsWith("if") || Tag.StartsWith("else"))
 		return ConditionalState.ProcessLine(Trimmed, Context);

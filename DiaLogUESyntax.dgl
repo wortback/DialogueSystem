@@ -106,6 +106,26 @@ SpeakerA: "Great, let's go!"
 
 set F_LikesElephants=true]
 
+# END META ##########################################################################################
+
+# 'end' meta data: marks the end of the dialogue
+# When the dialogue flow reaches an [end] node, the dialogue terminates immediately,
+# even inside a branch or an if-else block
+
+# Valid Syntax:
+SpeakerA: "Goodbye!"
+[end]
+
+[branch B_Farewell]
+	SpeakerA: "See you tomorrow."
+	[end]
+
+# Invalid Syntax:
+# 	1. Missing or inproper brackets
+[end
+
+end]
+
 # IF-ELSE CONDITIONAL ##################################################################################
 	
 # if-else conditionals: support branching without declaring a branch based on a flag's state
